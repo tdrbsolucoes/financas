@@ -149,9 +149,6 @@ function App() {
       } catch (error) {
         console.error('Erro ao verificar banco:', error)
         setDatabaseReady(false)
-      } finally {
-        setLoading(false)
-      }
         console.error('Erro ao verificar usuário:', error)
       } finally {
         setLoading(false)
@@ -162,7 +159,6 @@ function App() {
     // Escutar mudanças de autenticação
     const { data: { subscription } } = authService.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
-      setUser(user)
     })
 
     return () => subscription.unsubscribe()
