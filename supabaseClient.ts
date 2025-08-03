@@ -178,7 +178,7 @@ export const transactionsService = {
     
     // Buscar contato se existir
     let contact = undefined
-    if (data?.contact_id) {
+    if (data?.contact_id && data.contact_id.trim() !== '' && data.contact_id !== 'null') {
       const { data: contactData } = await supabase
         .from('contacts')
         .select('*')
@@ -203,7 +203,7 @@ export const transactionsService = {
     
     // Buscar contato se existir
     let contact = undefined
-    if (data?.contact_id) {
+    if (data?.contact_id && data.contact_id.trim() !== '' && data.contact_id !== 'null') {
       const { data: contactData } = await supabase
         .from('contacts')
         .select('*')
@@ -231,7 +231,7 @@ export const transactionsService = {
     
     // Buscar contato se existir
     let contact = undefined
-    if (data?.contact_id) {
+    if (data?.contact_id && data.contact_id.trim() !== '' && data.contact_id !== 'null') {
       const { data: contactData } = await supabase
         .from('contacts')
         .select('*')
