@@ -14,6 +14,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.53.0",
     "dotenv": "^16.4.5",
+    "lucide-react": "^0.536.0",
     "postgres": "^3.4.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
