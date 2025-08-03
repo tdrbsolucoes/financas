@@ -133,14 +133,37 @@ export const transactionsService = {
   async getTransactions(userId: string) {
     const { data, error } = await supabase
       .from('transactions')
-      .select(`
-        *,
-        contact:contacts(*)
-      `)
+      .select('*')
       .eq('user_id', userId)
       .order('due_date', { ascending: false })
     
-    return { data, error }
+    if (error) return { data: null, error }
+    
+    // Buscar contatos separadamente e fazer o join manualmente
+    const contactIds = data?.map(t => t.contact_id).filter(Boolean) || []
+    let contactsMap: Record<string, Contact> = {}
+    
+    if (contactIds.length > 0) {
+      const { data: contacts } = await supabase
+        .from('contacts')
+        .select('*')
+        .in('id', contactIds)
+      
+      if (contacts) {
+        contactsMap = contacts.reduce((acc, contact) => {
+          acc[contact.id] = contact
+          return acc
+        }, {} as Record<string, Contact>)
+      }
+    }
+    
+    // Adicionar contatos às transações
+    const transactionsWithContacts = data?.map(transaction => ({
+      ...transaction,
+      contact: transaction.contact_id ? contactsMap[transaction.contact_id] : undefined
+    }))
+    
+    return { data: transactionsWithContacts, error: null }
   },
 
   // Criar nova transação
@@ -148,13 +171,23 @@ export const transactionsService = {
     const { data, error } = await supabase
       .from('transactions')
       .insert([transaction])
-      .select(`
-        *,
-        contact:contacts(*)
-      `)
+      .select('*')
       .single()
     
-    return { data, error }
+    if (error) return { data: null, error }
+    
+    // Buscar contato se existir
+    let contact = undefined
+    if (data?.contact_id) {
+      const { data: contactData } = await supabase
+        .from('contacts')
+        .select('*')
+        .eq('id', data.contact_id)
+        .single()
+      contact = contactData
+    }
+    
+    return { data: { ...data, contact }, error: null }
   },
 
   // Atualizar transação
@@ -163,13 +196,23 @@ export const transactionsService = {
       .from('transactions')
       .update(updates)
       .eq('id', id)
-      .select(`
-        *,
-        contact:contacts(*)
-      `)
+      .select('*')
       .single()
     
-    return { data, error }
+    if (error) return { data: null, error }
+    
+    // Buscar contato se existir
+    let contact = undefined
+    if (data?.contact_id) {
+      const { data: contactData } = await supabase
+        .from('contacts')
+        .select('*')
+        .eq('id', data.contact_id)
+        .single()
+      contact = contactData
+    }
+    
+    return { data: { ...data, contact }, error: null }
   },
 
   // Marcar transação como paga
@@ -181,13 +224,23 @@ export const transactionsService = {
         paid_date: paidDate 
       })
       .eq('id', id)
-      .select(`
-        *,
-        contact:contacts(*)
-      `)
+      .select('*')
       .single()
     
-    return { data, error }
+    if (error) return { data: null, error }
+    
+    // Buscar contato se existir
+    let contact = undefined
+    if (data?.contact_id) {
+      const { data: contactData } = await supabase
+        .from('contacts')
+        .select('*')
+        .eq('id', data.contact_id)
+        .single()
+      contact = contactData
+    }
+    
+    return { data: { ...data, contact }, error: null }
   },
 
   // Deletar transação
@@ -204,15 +257,38 @@ export const transactionsService = {
   async getTransactionsByPeriod(userId: string, startDate: string, endDate: string) {
     const { data, error } = await supabase
       .from('transactions')
-      .select(`
-        *,
-        contact:contacts(*)
-      `)
+      .select('*')
       .eq('user_id', userId)
       .gte('due_date', startDate)
       .lte('due_date', endDate)
       .order('due_date', { ascending: false })
     
-    return { data, error }
+    if (error) return { data: null, error }
+    
+    // Buscar contatos separadamente e fazer o join manualmente
+    const contactIds = data?.map(t => t.contact_id).filter(Boolean) || []
+    let contactsMap: Record<string, Contact> = {}
+    
+    if (contactIds.length > 0) {
+      const { data: contacts } = await supabase
+        .from('contacts')
+        .select('*')
+        .in('id', contactIds)
+      
+      if (contacts) {
+        contactsMap = contacts.reduce((acc, contact) => {
+          acc[contact.id] = contact
+          return acc
+        }, {} as Record<string, Contact>)
+      }
+    }
+    
+    // Adicionar contatos às transações
+    const transactionsWithContacts = data?.map(transaction => ({
+      ...transaction,
+      contact: transaction.contact_id ? contactsMap[transaction.contact_id] : undefined
+    }))
+    
+    return { data: transactionsWithContacts, error: null }
   }
 }
