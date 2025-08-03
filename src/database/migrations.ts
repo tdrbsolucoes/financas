@@ -1,5 +1,5 @@
 // Sistema de migrações automáticas para Supabase
-import { supabase } from '../supabaseClient'
+import { supabase } from '../../supabaseClient'
 
 export interface Migration {
   id: string
