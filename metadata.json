@@ -1,0 +1,6 @@
+{
+  "name": "Sistema de Gerenciamento de Finanças",
+  "description": "Um aplicativo para gerenciar finanças pessoais e de pequenas empresas, com cadastro de empresas, lançamentos de despesas e ganhos, e relatórios.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}

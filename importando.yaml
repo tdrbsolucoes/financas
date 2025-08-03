@@ -1,0 +1,24 @@
+# Instalação e Execução do Projeto
+npm install
+npm run dev
+
+# Tarefas para Refatoração com Supabase
+- **Configuração Inicial**:
+  - Conectar a aplicação com o Supabase usando as chaves do arquivo `.env`.
+  - Revisar e aplicar o script SQL (`0001_criar_tabelas_iniciais.sql`) para criar a estrutura do banco de dados.
+- **Autenticação de Usuários**:
+  - Substituir o `AuthProvider` (baseado em `localStorage`) para usar o Supabase Auth (`supabase.auth`).
+  - Implementar as funções de login, logout e cadastro de novos usuários.
+- **Gerenciamento de Contatos (CRUD)**:
+  - Conectar a `ContactsPage` para ler e escrever na tabela `categorias`.
+  - **Ajuste de Schema**: Modificar a tabela `categorias` para incluir os campos `tipo` ('empresa'|'cliente'), `email` e os dados de cobrança recorrente (`recurringCharge`).
+- **Gerenciamento de Transações (CRUD)**:
+  - Conectar a `FinancialPage` para ler e escrever na tabela `transacoes`.
+  - Implementar a lógica para criar, editar, deletar e marcar transações como pagas.
+- **Lógica de Negócio (Backend)**:
+  - **Lançamentos Recorrentes**: Migrar a função `checkAndGenerateRecurringTransactions` para uma Supabase Edge Function para ser executada como um cron job.
+  - **Armazenamento**: Implementar o upload de ícones para empresas usando o Supabase Storage.
+
+# Próximos Passos
+- Organizar a estrutura de pastas do projeto.
+- Iniciar o desenvolvimento das funcionalidades.
