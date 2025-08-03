@@ -56,7 +56,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
       is_paid: formData.is_paid,
       paid_date: formData.paid_date || undefined,
       is_recurring: formData.is_recurring,
-      contact_id: formData.contact_id || undefined
+      contact_id: formData.contact_id === '' ? null : formData.contact_id
     }
 
     onSave(transactionData)
