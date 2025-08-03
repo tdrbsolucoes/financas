@@ -49,7 +49,6 @@ function App() {
           console.log('✅ Banco já estava pronto!')
           setDatabaseReady(true)
         }
-        setDatabaseReady(isDatabaseReady)
         
       } catch (error) {
         console.error('❌ Erro na inicialização:', error)
