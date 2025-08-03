@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "start": "npm run dev",
-    "setup-db": "echo 'Use o sistema automático de configuração do banco'"
+    "setup-db": "node setupDatabase.js",
+    "check-db": "node databaseSetup.js"
   },
   "keywords": [],
   "author": "",

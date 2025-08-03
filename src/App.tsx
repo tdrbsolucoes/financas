@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { authService } from './supabaseClient'
-import { simpleSetup } from './database/simpleSetup'
+import { authService, supabase } from './supabaseClient'
 import { User } from '@supabase/supabase-js'
 import LoginPage from './components/LoginPage'
 import Dashboard from './components/Dashboard'
@@ -15,31 +14,26 @@ type Page = 'dashboard' | 'contacts' | 'financial' | 'reports'
 function App() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [databaseReady, setDatabaseReady] = useState(false)
   const [currentPage, setCurrentPage] = useState<Page>('dashboard')
+  const [showDatabaseError, setShowDatabaseError] = useState(false)
 
   useEffect(() => {
-    const initializeApp = async () => {
+    const checkUser = async () => {
       try {
         const { user } = await authService.getCurrentUser()
         setUser(user)
-        
-        // Verificar e configurar banco automaticamente
-        const setupResult = await simpleSetup.setup()
-        
-        setDatabaseReady(setupResult.success)
-        
       } catch (error) {
-        setDatabaseReady(false)
+        console.error('Erro ao verificar usuário:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    initializeApp()
+    checkUser()
     
     // Escutar mudanças de autenticação
-    const subscription = authService.onAuthStateChange((user) => {
+    const { data: { subscription } } = authService.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null)
       setUser(user)
     })
 
@@ -62,30 +56,77 @@ function App() {
     )
   }
 
-  // Se o banco não está configurado, mostrar mensagem
-  if (!databaseReady) {
+  // Verificar se há erro de banco (tabelas não existem)
+  if (showDatabaseError) {
     return (
       <div className="login-container">
-        <div className="login-box" style={{ maxWidth: '600px' }}>
+        <div className="login-box" style={{ maxWidth: '700px' }}>
           <div className="logo-container">
             <div className="logo">F</div>
             <h1>Finanças</h1>
           </div>
           <div className="error-message">
-            <h3>⚠️ Banco de dados não configurado</h3>
-            <p>Execute este SQL no Supabase Dashboard (SQL Editor):</p>
+            <h3>⚠️ Tabelas do banco não encontradas</h3>
+            <p>Execute este comando na raiz do projeto:</p>
+            <div style={{ 
+              background: 'var(--muted)', 
+              padding: '1rem', 
+              borderRadius: 'var(--radius)', 
+              fontSize: '0.9rem',
+              marginTop: '1rem',
+              fontFamily: 'monospace'
+            }}>
+              <code>node setupDatabase.js</code>
+            </div>
+            <p style={{ marginTop: '1rem', fontSize: '0.9rem' }}>
+              Ou execute o SQL manualmente no Supabase Dashboard:
+            </p>
             <div style={{ 
               background: 'var(--muted)', 
               padding: '1rem', 
               borderRadius: 'var(--radius)', 
               fontSize: '0.8rem',
-              maxHeight: '300px',
+              maxHeight: '200px',
               overflowY: 'auto',
               marginTop: '1rem',
               fontFamily: 'monospace'
             }}>
               <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
-                {simpleSetup.getManualSQL()}
+{`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TYPE contact_type AS ENUM ('empresa', 'cliente');
+CREATE TYPE transaction_type AS ENUM ('income', 'expense');
+
+CREATE TABLE contacts (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id uuid REFERENCES auth.users ON DELETE CASCADE,
+  created_at timestamptz DEFAULT now(),
+  name text NOT NULL,
+  type contact_type NOT NULL,
+  email text,
+  recurring_charge jsonb
+);
+
+CREATE TABLE transactions (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id uuid REFERENCES auth.users ON DELETE CASCADE,
+  created_at timestamptz DEFAULT now(),
+  description text NOT NULL,
+  amount numeric(10,2) NOT NULL,
+  date date NOT NULL,
+  due_date date NOT NULL,
+  type transaction_type NOT NULL,
+  is_paid boolean DEFAULT false,
+  paid_date date,
+  is_recurring boolean DEFAULT false,
+  contact_id uuid REFERENCES contacts(id)
+);
+
+ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "contacts_policy" ON contacts FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = user_id);`}
               </pre>
             </div>
             <button 
@@ -112,17 +153,26 @@ function App() {
   }
 
   const renderCurrentPage = () => {
+    // Interceptar erros de tabelas não encontradas
+    const handleDatabaseError = (error: any) => {
+      if (error?.message?.includes('relation') && error?.message?.includes('does not exist')) {
+        setShowDatabaseError(true)
+        return
+      }
+      throw error
+    }
+
     switch (currentPage) {
       case 'dashboard':
-        return <Dashboard user={user} />
+        return <Dashboard user={user} onDatabaseError={handleDatabaseError} />
       case 'contacts':
-        return <ContactsPage user={user} />
+        return <ContactsPage user={user} onDatabaseError={handleDatabaseError} />
       case 'financial':
-        return <FinancialPage user={user} />
+        return <FinancialPage user={user} onDatabaseError={handleDatabaseError} />
       case 'reports':
-        return <ReportsPage user={user} />
+        return <ReportsPage user={user} onDatabaseError={handleDatabaseError} />
       default:
-        return <Dashboard user={user} />
+        return <Dashboard user={user} onDatabaseError={handleDatabaseError} />
     }
   }
 
