@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { authService, supabase } from './supabaseClient'
-import { migrationService } from './src/database/migrations'
-import DatabaseSetup from './src/components/DatabaseSetup'
 import LoginPage from './components/LoginPage'
 import Dashboard from './components/Dashboard'
 import Sidebar from './components/Sidebar'
@@ -16,47 +14,26 @@ type Page = 'dashboard' | 'contacts' | 'financial' | 'reports'
 function App() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [databaseReady, setDatabaseReady] = useState(false)
-  const [checkingDatabase, setCheckingDatabase] = useState(true)
   const [currentPage, setCurrentPage] = useState<Page>('dashboard')
 
   useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        // Primeiro verificar se o banco está configurado
-        const tablesExist = await migrationService.checkTablesExist()
-        setDatabaseReady(tablesExist)
-        setCheckingDatabase(false)
-        
-        if (tablesExist) {
-          // Se o banco está pronto, verificar usuário logado
-          const { user } = await authService.getCurrentUser()
-          setUser(user)
-        }
-      } catch (error) {
-        console.error('Erro ao inicializar aplicação:', error)
-        setDatabaseReady(false)
-        setCheckingDatabase(false)
-      } finally {
-        setLoading(false)
-      }
+    // Verificar se há usuário logado
+    const checkUser = async () => {
+      const { user } = await authService.getCurrentUser()
+      setUser(user)
+      setLoading(false)
     }
 
-    initializeApp()
+    checkUser()
 
     // Escutar mudanças de autenticação
     const { data: { subscription } } = authService.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
+      setLoading(false)
     })
 
     return () => subscription.unsubscribe()
   }, [])
-
-  const handleDatabaseReady = () => {
-    setDatabaseReady(true)
-    // Recarregar a página para inicializar com o banco pronto
-    window.location.reload()
-  }
 
   const handleLogout = async () => {
     await authService.signOut()
@@ -64,7 +41,7 @@ function App() {
     setCurrentPage('dashboard')
   }
 
-  if (loading || checkingDatabase) {
+  if (loading) {
     return (
       <div className="login-container">
         <div className="login-box">
@@ -73,15 +50,11 @@ function App() {
             <h1>Finanças</h1>
           </div>
           <p style={{ textAlign: 'center', color: 'var(--muted-foreground)' }}>
-            {checkingDatabase ? 'Verificando banco de dados...' : 'Carregando...'}
+            Carregando...
           </p>
         </div>
       </div>
     )
-  }
-
-  if (!databaseReady) {
-    return <DatabaseSetup onDatabaseReady={handleDatabaseReady} />
   }
 
   if (!user) {
