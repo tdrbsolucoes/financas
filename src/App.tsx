@@ -42,22 +42,8 @@ function App() {
     }
 
     initializeApp()
-    const initializeApp = async () => {
-      try {
-        // 1. Verificar usuário logado
-        const { user } = await authService.getCurrentUser()
-        setUser(user)
-        
-        // 2. Verificar/configurar banco automaticamente
-        const isDatabaseReady = await autoMigrationService.isDatabaseReady()
-        setDatabaseReady(isDatabaseReady)
-        
-      } catch (error) {
-        console.error('Erro na inicialização:', error)
-        setDatabaseReady(false)
-      } finally {
-        setLoading(false)
-      }
+    const subscription = authService.onAuthStateChange((user) => {
+      setUser(user)
     })
 
     return () => subscription.unsubscribe()
@@ -73,7 +59,7 @@ function App() {
     setDatabaseReady(true)
   }
 
-  const handleDatabaseSetupComplete = () => {
+  const handleDatabaseSetupComplete2 = () => {
     setDatabaseReady(true)
   }
 
@@ -121,7 +107,7 @@ function App() {
         return <Dashboard user={user} />
     }
   }
-    initializeApp()
+
   return (
     <div className="app-container">
       <Sidebar 
