@@ -1,0 +1,417 @@
+# Guia Completo de Migrações Supabase
+
+Este guia explica como configurar e usar migrações automáticas no Supabase para projetos futuros.
+
+## 1. Estrutura de Pastas
+
+```
+projeto/
+├── supabase/
+│   └── migrations/
+│       ├── create_initial_tables.sql
+│       ├── add_new_field.sql
+│       └── update_policies.sql
+├── src/
+│   └── lib/
+│       └── supabase.ts
+└── docs/
+    └── supabase-migrations-guide.md
+```
+
+## 2. Como Criar Migrações
+
+### 2.1 Primeira Migração (Criação de Tabelas)
+
+Crie um arquivo em `supabase/migrations/create_[nome_da_tabela].sql`:
+
+```sql
+/*
+  # Criar tabela de usuários
+
+  1. Nova Tabela
+    - `users`
+      - `id` (uuid, primary key)
+      - `email` (text, unique)
+      - `name` (text)
+      - `created_at` (timestamp)
+      - `updated_at` (timestamp)
+
+  2. Segurança
+    - Habilitar RLS na tabela `users`
+    - Adicionar política para usuários autenticados
+*/
+
+-- Criar tabela
+CREATE TABLE IF NOT EXISTS users (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text UNIQUE NOT NULL,
+  name text NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Habilitar Row Level Security
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+-- Criar política de acesso
+CREATE POLICY "Usuários podem ler próprios dados"
+  ON users
+  FOR SELECT
+  TO authenticated
+  USING (auth.uid() = id);
+
+-- Criar função para atualizar updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Criar trigger para updated_at
+CREATE TRIGGER update_users_updated_at
+  BEFORE UPDATE ON users
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Criar índices para performance
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
+```
+
+### 2.2 Migração para Adicionar Campo
+
+Crie um arquivo em `supabase/migrations/add_[nome_do_campo].sql`:
+
+```sql
+/*
+  # Adicionar campo telefone à tabela users
+
+  1. Alterações
+    - Adicionar coluna `phone` (text, opcional)
+    - Criar índice para busca por telefone
+
+  2. Segurança
+    - Atualizar políticas se necessário
+*/
+
+-- Adicionar nova coluna
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'phone'
+  ) THEN
+    ALTER TABLE users ADD COLUMN phone text;
+  END IF;
+END $$;
+
+-- Criar índice para o novo campo
+CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);
+```
+
+### 2.3 Migração para Alterar Campo
+
+```sql
+/*
+  # Alterar campo name para ser opcional
+
+  1. Alterações
+    - Tornar coluna `name` nullable
+    - Adicionar valor padrão
+
+  2. Notas
+    - Operação segura, não remove dados
+*/
+
+-- Alterar coluna para permitir NULL
+ALTER TABLE users ALTER COLUMN name DROP NOT NULL;
+
+-- Adicionar valor padrão
+ALTER TABLE users ALTER COLUMN name SET DEFAULT '';
+```
+
+## 3. Configuração do Cliente Supabase
+
+### 3.1 Arquivo de Configuração (`src/lib/supabase.ts`)
+
+```typescript
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Tipos do banco de dados
+export interface Database {
+  public: {
+    Tables: {
+      users: {
+        Row: {
+          id: string;
+          email: string;
+          name: string;
+          phone: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          name: string;
+          phone?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          name?: string;
+          phone?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+    };
+  };
+}
+```
+
+## 4. Boas Práticas
+
+### 4.1 Nomenclatura de Arquivos
+- Use nomes descritivos: `create_users_table.sql`
+- Para alterações: `add_phone_field.sql`
+- Para políticas: `update_user_policies.sql`
+- Não use prefixos numéricos (o sistema renomeia automaticamente)
+
+### 4.2 Estrutura das Migrações
+1. **Comentário descritivo** no início
+2. **Operações seguras** (IF NOT EXISTS, IF EXISTS)
+3. **Índices** para campos de busca
+4. **RLS e políticas** para segurança
+5. **Triggers** para campos automáticos
+
+### 4.3 Operações Seguras
+```sql
+-- ✅ Seguro - não falha se já existir
+CREATE TABLE IF NOT EXISTS users (...);
+
+-- ✅ Seguro - verifica antes de adicionar
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'phone'
+  ) THEN
+    ALTER TABLE users ADD COLUMN phone text;
+  END IF;
+END $$;
+
+-- ❌ Perigoso - pode falhar
+CREATE TABLE users (...);
+ALTER TABLE users ADD COLUMN phone text;
+```
+
+## 5. Exemplo Completo: Sistema de Posts
+
+### 5.1 Migração Inicial
+```sql
+/*
+  # Sistema de Posts - Tabelas Iniciais
+
+  1. Novas Tabelas
+    - `categories` - Categorias dos posts
+    - `posts` - Posts do blog
+    - `comments` - Comentários dos posts
+
+  2. Relacionamentos
+    - posts.category_id -> categories.id
+    - comments.post_id -> posts.id
+
+  3. Segurança
+    - RLS habilitado em todas as tabelas
+    - Políticas de leitura pública
+*/
+
+-- Tabela de categorias
+CREATE TABLE IF NOT EXISTS categories (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL UNIQUE,
+  slug text NOT NULL UNIQUE,
+  description text,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Tabela de posts
+CREATE TABLE IF NOT EXISTS posts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  slug text NOT NULL UNIQUE,
+  content text NOT NULL,
+  excerpt text,
+  category_id uuid REFERENCES categories(id),
+  published boolean DEFAULT false,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Tabela de comentários
+CREATE TABLE IF NOT EXISTS comments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id uuid REFERENCES posts(id) ON DELETE CASCADE,
+  author_name text NOT NULL,
+  author_email text NOT NULL,
+  content text NOT NULL,
+  approved boolean DEFAULT false,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Habilitar RLS
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+
+-- Políticas de leitura pública
+CREATE POLICY "Categorias são públicas"
+  ON categories FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+CREATE POLICY "Posts publicados são públicos"
+  ON posts FOR SELECT
+  TO anon, authenticated
+  USING (published = true);
+
+CREATE POLICY "Comentários aprovados são públicos"
+  ON comments FOR SELECT
+  TO anon, authenticated
+  USING (approved = true);
+
+-- Triggers para updated_at
+CREATE TRIGGER update_posts_updated_at
+  BEFORE UPDATE ON posts
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Índices
+CREATE INDEX idx_posts_category ON posts(category_id);
+CREATE INDEX idx_posts_published ON posts(published);
+CREATE INDEX idx_posts_created_at ON posts(created_at);
+CREATE INDEX idx_comments_post ON comments(post_id);
+CREATE INDEX idx_comments_approved ON comments(approved);
+```
+
+### 5.2 Migração para Adicionar Tags
+```sql
+/*
+  # Adicionar sistema de tags
+
+  1. Nova Tabela
+    - `tags` - Tags dos posts
+
+  2. Tabela de Relacionamento
+    - `post_tags` - Relacionamento many-to-many
+
+  3. Índices
+    - Índices para performance de busca
+*/
+
+-- Tabela de tags
+CREATE TABLE IF NOT EXISTS tags (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL UNIQUE,
+  slug text NOT NULL UNIQUE,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Tabela de relacionamento post-tags
+CREATE TABLE IF NOT EXISTS post_tags (
+  post_id uuid REFERENCES posts(id) ON DELETE CASCADE,
+  tag_id uuid REFERENCES tags(id) ON DELETE CASCADE,
+  PRIMARY KEY (post_id, tag_id)
+);
+
+-- RLS
+ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE post_tags ENABLE ROW LEVEL SECURITY;
+
+-- Políticas
+CREATE POLICY "Tags são públicas"
+  ON tags FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+CREATE POLICY "Post tags são públicas"
+  ON post_tags FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+-- Índices
+CREATE INDEX idx_post_tags_post ON post_tags(post_id);
+CREATE INDEX idx_post_tags_tag ON post_tags(tag_id);
+```
+
+## 6. Checklist para Novas Migrações
+
+- [ ] Comentário descritivo no início
+- [ ] Usar `IF NOT EXISTS` / `IF EXISTS`
+- [ ] Habilitar RLS nas novas tabelas
+- [ ] Criar políticas de segurança apropriadas
+- [ ] Adicionar índices para campos de busca
+- [ ] Criar triggers para `updated_at` se necessário
+- [ ] Testar a migração em ambiente de desenvolvimento
+- [ ] Atualizar tipos TypeScript no `supabase.ts`
+- [ ] Documentar as mudanças
+
+## 7. Comandos Úteis
+
+### Verificar se coluna existe
+```sql
+SELECT EXISTS (
+  SELECT 1 FROM information_schema.columns
+  WHERE table_name = 'users' AND column_name = 'phone'
+);
+```
+
+### Verificar se tabela existe
+```sql
+SELECT EXISTS (
+  SELECT 1 FROM information_schema.tables
+  WHERE table_name = 'users'
+);
+```
+
+### Listar todas as tabelas
+```sql
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public';
+```
+
+### Ver estrutura de uma tabela
+```sql
+SELECT column_name, data_type, is_nullable, column_default
+FROM information_schema.columns
+WHERE table_name = 'users';
+```
+
+## 8. Troubleshooting
+
+### Erro: "relation already exists"
+- Use `IF NOT EXISTS` nas criações
+
+### Erro: "column already exists"
+- Use blocos `DO $$` com verificação
+
+### Erro: "permission denied"
+- Verifique as políticas RLS
+
+### Migração não aplicada
+- Verifique se o arquivo está na pasta correta
+- Confirme que a conexão Supabase está ativa
