@@ -17,7 +17,10 @@ async function runMigrations() {
 
   // Conecta ao banco de dados com SSL
   const sql = postgres(connectionString, {
-    ssl: 'require'
+    ssl: 'require',
+    connect_timeout: 30,
+    idle_timeout: 30,
+    max_lifetime: 60 * 30
   });
 
   console.log('🚀 Conectado ao banco de dados. Verificando migrações...');
