@@ -41,11 +41,17 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
   const handleSaveContact = async (contactData: Omit<Contact, 'id' | 'created_at'>) => {
     try {
       if (editingContact) {
+        // Remove user_id from update data to prevent empty string UUID error
+        const { user_id, ...updateData } = contactData
         const { data, error } = await contactsService.updateContact(editingContact.id, contactData)
         if (error) throw error
         
         setContacts(prev => prev.map(c => c.id === editingContact.id ? data : c))
       } else {
+        // Ensure user_id is present for new contacts
+        if (!user.id) {
+          throw new Error('User ID is required to create a contact')
+        }
         const { data, error } = await contactsService.createContact({
           ...contactData,
           user_id: user.id
