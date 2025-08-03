@@ -62,8 +62,12 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
   // Verifica se tabelas existem
   async checkTables(): Promise<boolean> {
     try {
-      const { error } = await supabase.from('contacts').select('id').limit(1)
-      return !error
+      // Verifica se ambas as tabelas existem
+      const { error: contactsError } = await supabase.from('contacts').select('id').limit(1)
+      const { error: transactionsError } = await supabase.from('transactions').select('id').limit(1)
+      
+      // Retorna true apenas se ambas as tabelas existirem
+      return !contactsError && !transactionsError
     } catch {
       return false
     }
