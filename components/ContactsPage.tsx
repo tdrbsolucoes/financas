@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { User } from '@supabase/supabase-js'
-import { contactsService, Contact } from '../supabaseClient'
+import { contactsService, Contact } from '../src/lib/supabase'
 import { Plus, Edit, Trash2, Building, User as UserIcon, RefreshCw } from 'lucide-react'
 import ContactModal from './ContactModal'
 import ConfirmationModal from './ConfirmationModal'

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { User } from '@supabase/supabase-js'
-import { transactionsService, Transaction } from '../supabaseClient'
+import { transactionsService, Transaction } from '../src/lib/supabase'
 import { TrendingUp, TrendingDown, Clock, CheckCircle } from 'lucide-react'
 
 interface DashboardProps {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Contact } from '../supabaseClient'
+import { Contact } from '../src/lib/supabase'
 import { Building, User, X } from 'lucide-react'
 
 interface ContactModalProps {

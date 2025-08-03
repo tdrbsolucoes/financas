@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Transaction, Contact } from '../supabaseClient'
+import { Transaction, Contact } from '../src/lib/supabase'
 import { X } from 'lucide-react'
 
 interface TransactionModalProps {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { User } from '@supabase/supabase-js'
-import { transactionsService, Transaction } from '../supabaseClient'
+import { transactionsService, Transaction } from '../src/lib/supabase'
 import { Calendar, TrendingUp, TrendingDown, Clock, AlertTriangle } from 'lucide-react'
 
 interface ReportsPageProps {

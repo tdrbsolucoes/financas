@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { User } from '@supabase/supabase-js'
-import { transactionsService, contactsService, Transaction, Contact } from '../supabaseClient'
+import { transactionsService, contactsService, Transaction, Contact } from '../src/lib/supabase'
 import { Plus, Edit, Trash2, Settings, Check, X } from 'lucide-react'
 import TransactionModal from './TransactionModal'
 import ConfirmationModal from './ConfirmationModal'
