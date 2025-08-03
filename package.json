@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "migrate": "node apply-migrations.js",
-    "start": "npm run migrate && npm run dev"
+    "start": "npm run dev"
   },
   "keywords": [],
   "author": "",
