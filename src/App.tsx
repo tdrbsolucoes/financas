@@ -11,25 +11,153 @@ import ReportsPage from './components/ReportsPage'
 
 type Page = 'dashboard' | 'contacts' | 'financial' | 'reports'
 
+// Componente para mostrar erro de banco não configurado
+function DatabaseError() {
+  return (
+    <div className="login-container">
+      <div className="login-box">
+        <div className="logo-container">
+          <div className="logo">⚠️</div>
+          <h1>Banco não configurado</h1>
+        </div>
+        <div style={{ textAlign: 'left', marginTop: '20px' }}>
+          <p><strong>As tabelas do banco não foram criadas ainda.</strong></p>
+          <p>Para resolver, execute um dos comandos abaixo:</p>
+          
+          <div style={{ 
+            backgroundColor: '#f5f5f5', 
+            padding: '15px', 
+            borderRadius: '8px', 
+            margin: '15px 0',
+            fontFamily: 'monospace'
+          }}>
+            npm run setup-db
+          </div>
+          
+          <p><strong>Ou copie e execute este SQL no Supabase Dashboard:</strong></p>
+          <div style={{ 
+            backgroundColor: '#f5f5f5', 
+            padding: '15px', 
+            borderRadius: '8px', 
+            margin: '15px 0',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+            maxHeight: '200px',
+            overflow: 'auto'
+          }}>
+            {`-- Extensão UUID
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Tipos ENUM
+DO $$ BEGIN
+    CREATE TYPE contact_type AS ENUM ('empresa', 'cliente');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE transaction_type AS ENUM ('income', 'expense');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- Tabela contacts
+CREATE TABLE IF NOT EXISTS contacts (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id uuid REFERENCES auth.users ON DELETE CASCADE,
+  created_at timestamptz DEFAULT now(),
+  name text NOT NULL,
+  type contact_type NOT NULL,
+  email text,
+  recurring_charge jsonb
+);
+
+-- Tabela transactions
+CREATE TABLE IF NOT EXISTS transactions (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id uuid REFERENCES auth.users ON DELETE CASCADE,
+  created_at timestamptz DEFAULT now(),
+  description text NOT NULL,
+  amount numeric(10,2) NOT NULL,
+  date date NOT NULL,
+  due_date date NOT NULL,
+  type transaction_type NOT NULL,
+  is_paid boolean DEFAULT false,
+  paid_date date,
+  is_recurring boolean DEFAULT false,
+  contact_id uuid REFERENCES contacts(id)
+);
+
+-- RLS
+ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+
+-- Políticas
+CREATE POLICY "contacts_policy" ON contacts FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = user_id);`}
+          </div>
+          
+          <button 
+            onClick={() => window.location.reload()} 
+            style={{
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              marginTop: '15px'
+            }}
+          >
+            Verificar Novamente
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState<Page>('dashboard')
+  const [databaseReady, setDatabaseReady] = useState<boolean | null>(null)
   const [showDatabaseError, setShowDatabaseError] = useState(false)
 
   useEffect(() => {
-    const checkUser = async () => {
+    const initializeApp = async () => {
       try {
-        const { user } = await authService.getCurrentUser()
-        setUser(user)
+        // Verificar se as tabelas existem
+        const { error: contactsError } = await supabase
+          .from('contacts')
+          .select('id')
+          .limit(1)
+        
+        const { error: transactionsError } = await supabase
+          .from('transactions')
+          .select('id')
+          .limit(1)
+        
+        const tablesExist = !contactsError && !transactionsError
+        setDatabaseReady(tablesExist)
+        
+        if (tablesExist) {
+          // Verificar usuário logado apenas se o banco estiver pronto
+          const { user } = await authService.getCurrentUser()
+          setUser(user)
+        }
       } catch (error) {
+        console.error('Erro ao verificar banco:', error)
+        setDatabaseReady(false)
+      } finally {
+        setLoading(false)
+      }
         console.error('Erro ao verificar usuário:', error)
       } finally {
         setLoading(false)
       }
     }
-
-    checkUser()
+    initializeApp()
     
     // Escutar mudanças de autenticação
     const { data: { subscription } } = authService.onAuthStateChange((event, session) => {
@@ -54,6 +182,11 @@ function App() {
         </div>
       </div>
     )
+  }
+
+  // Se o banco não estiver configurado, mostrar tela de erro
+  if (databaseReady === false) {
+    return <DatabaseError />
   }
 
   // Verificar se há erro de banco (tabelas não existem)
