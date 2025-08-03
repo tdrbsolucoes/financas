@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { authService } from './supabaseClient'
-import { autoMigrationService } from './database/autoMigration'
+import { simpleSetup } from './database/simpleSetup'
 import { User } from '@supabase/supabase-js'
 import LoginPage from './components/LoginPage'
-import AutoDatabaseSetup from './components/AutoDatabaseSetup'
 import Dashboard from './components/Dashboard'
 import Sidebar from './components/Sidebar'
 import BottomNav from './components/BottomNav'
@@ -22,36 +21,15 @@ function App() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        console.log('🚀 Iniciando verificação do sistema...')
-        
-        // 1. Verificar usuário logado
         const { user } = await authService.getCurrentUser()
         setUser(user)
-        console.log('👤 Usuário verificado:', user ? 'Logado' : 'Não logado')
         
-        // 2. Verificar se banco está pronto
-        const isDatabaseReady = await autoMigrationService.isDatabaseReady()
-        console.log('🗄️ Status do banco:', isDatabaseReady ? 'Pronto' : 'Precisa configurar')
+        // Verificar e configurar banco automaticamente
+        const setupResult = await simpleSetup.setup()
         
-        if (!isDatabaseReady) {
-          console.log('🔧 Tentando configurar banco automaticamente...')
-          const setupResult = await autoMigrationService.autoInitializeDatabase()
-          console.log('📊 Resultado da configuração:', setupResult)
-          
-          if (setupResult.success) {
-            console.log('✅ Banco configurado automaticamente!')
-            setDatabaseReady(true)
-          } else {
-            console.log('⚠️ Configuração automática falhou, mostrando tela de setup')
-            setDatabaseReady(false)
-          }
-        } else {
-          console.log('✅ Banco já estava pronto!')
-          setDatabaseReady(true)
-        }
+        setDatabaseReady(setupResult.success)
         
       } catch (error) {
-        console.error('❌ Erro na inicialização:', error)
         setDatabaseReady(false)
       } finally {
         setLoading(false)
@@ -67,18 +45,6 @@ function App() {
 
     return () => subscription.unsubscribe()
   }, [])
-
-  const handleLogout = async () => {
-    await authService.signOut()
-    setUser(null)
-    setCurrentPage('dashboard')
-  }
-
-  const handleDatabaseSetupComplete = () => {
-    console.log('✅ Setup do banco concluído!')
-    setDatabaseReady(true)
-  }
-
 
   if (loading) {
     return (
@@ -96,14 +62,53 @@ function App() {
     )
   }
 
-  // Se o banco não está configurado, mostrar tela de setup automático
+  // Se o banco não está configurado, mostrar mensagem
   if (!databaseReady) {
-    return <AutoDatabaseSetup onSetupComplete={handleDatabaseSetupComplete} />
+    return (
+      <div className="login-container">
+        <div className="login-box" style={{ maxWidth: '600px' }}>
+          <div className="logo-container">
+            <div className="logo">F</div>
+            <h1>Finanças</h1>
+          </div>
+          <div className="error-message">
+            <h3>⚠️ Banco de dados não configurado</h3>
+            <p>Execute este SQL no Supabase Dashboard (SQL Editor):</p>
+            <div style={{ 
+              background: 'var(--muted)', 
+              padding: '1rem', 
+              borderRadius: 'var(--radius)', 
+              fontSize: '0.8rem',
+              maxHeight: '300px',
+              overflowY: 'auto',
+              marginTop: '1rem',
+              fontFamily: 'monospace'
+            }}>
+              <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                {simpleSetup.getManualSQL()}
+              </pre>
+            </div>
+            <button 
+              className="login-button"
+              onClick={() => window.location.reload()}
+              style={{ marginTop: '1rem' }}
+            >
+              Verificar Novamente
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
-
 
   if (!user) {
     return <LoginPage />
+  }
+
+  const handleLogout = async () => {
+    await authService.signOut()
+    setUser(null)
+    setCurrentPage('dashboard')
   }
 
   const renderCurrentPage = () => {
