@@ -10,11 +10,14 @@
    const [loading, setLoading] = useState(true)
    const [error, setError] = useState('')
 @@ .. @@
-       setTransactions(data || [])
-     } catch (error: any) {
+      setTransactions(data || [])
+    } catch (error: any) {
 +      if (onDatabaseError) {
 +        onDatabaseError(error)
 +        return
 +      }
-       setError(error.message)
-     } finally {
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
