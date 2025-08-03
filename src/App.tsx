@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { authService } from './supabaseClient'
 import { autoMigrationService } from './database/autoMigration'
-import { autoMigrationService } from './database/autoMigration'
 import { User } from '@supabase/supabase-js'
 import LoginPage from './components/LoginPage'
-import AutoDatabaseSetup from './components/AutoDatabaseSetup'
 import AutoDatabaseSetup from './components/AutoDatabaseSetup'
 import Dashboard from './components/Dashboard'
 import Sidebar from './components/Sidebar'
@@ -19,22 +17,42 @@ function App() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [databaseReady, setDatabaseReady] = useState(false)
-  const [databaseReady, setDatabaseReady] = useState(false)
   const [currentPage, setCurrentPage] = useState<Page>('dashboard')
 
   useEffect(() => {
     const initializeApp = async () => {
       try {
+        console.log('🚀 Iniciando verificação do sistema...')
+        
         // 1. Verificar usuário logado
         const { user } = await authService.getCurrentUser()
         setUser(user)
+        console.log('👤 Usuário verificado:', user ? 'Logado' : 'Não logado')
         
-        // 2. Verificar/configurar banco automaticamente
+        // 2. Verificar se banco está pronto
         const isDatabaseReady = await autoMigrationService.isDatabaseReady()
+        console.log('🗄️ Status do banco:', isDatabaseReady ? 'Pronto' : 'Precisa configurar')
+        
+        if (!isDatabaseReady) {
+          console.log('🔧 Tentando configurar banco automaticamente...')
+          const setupResult = await autoMigrationService.autoInitializeDatabase()
+          console.log('📊 Resultado da configuração:', setupResult)
+          
+          if (setupResult.success) {
+            console.log('✅ Banco configurado automaticamente!')
+            setDatabaseReady(true)
+          } else {
+            console.log('⚠️ Configuração automática falhou, mostrando tela de setup')
+            setDatabaseReady(false)
+          }
+        } else {
+          console.log('✅ Banco já estava pronto!')
+          setDatabaseReady(true)
+        }
         setDatabaseReady(isDatabaseReady)
         
       } catch (error) {
-        console.error('Erro na inicialização:', error)
+        console.error('❌ Erro na inicialização:', error)
         setDatabaseReady(false)
       } finally {
         setLoading(false)
@@ -42,6 +60,8 @@ function App() {
     }
 
     initializeApp()
+    
+    // Escutar mudanças de autenticação
     const subscription = authService.onAuthStateChange((user) => {
       setUser(user)
     })
@@ -56,12 +76,10 @@ function App() {
   }
 
   const handleDatabaseSetupComplete = () => {
+    console.log('✅ Setup do banco concluído!')
     setDatabaseReady(true)
   }
 
-  const handleDatabaseSetupComplete2 = () => {
-    setDatabaseReady(true)
-  }
 
   if (loading) {
     return (
@@ -84,10 +102,6 @@ function App() {
     return <AutoDatabaseSetup onSetupComplete={handleDatabaseSetupComplete} />
   }
 
-  // Se o banco não está configurado, mostrar tela de setup automático
-  if (!databaseReady) {
-    return <AutoDatabaseSetup onSetupComplete={handleDatabaseSetupComplete} />
-  }
 
   if (!user) {
     return <LoginPage />

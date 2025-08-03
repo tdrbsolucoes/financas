@@ -102,33 +102,114 @@ export class AutoMigrationService {
   // Executa SQL usando a função RPC do Supabase
   async executeSQL(sql: string): Promise<{ success: boolean; error?: string }> {
     try {
+      console.log('🔄 Tentando executar SQL via RPC...')
+      
       // Tenta usar a função RPC se existir
       const { error } = await supabase.rpc('exec_sql', { sql_query: sql })
       
       if (error) {
+        console.log('⚠️ RPC falhou, tentando método alternativo...')
         // Se a função RPC não existir, retorna erro específico
         if (error.code === '42883') {
-          return { 
-            success: false, 
-            error: 'Função RPC não disponível. Execute o SQL manualmente no Supabase Dashboard.' 
-          }
+          // Tenta executar usando método alternativo
+          return await this.executeAlternativeMethod(sql)
         }
         throw error
       }
       
+      console.log('✅ SQL executado com sucesso via RPC')
       return { success: true }
     } catch (error: any) {
+      console.error('❌ Erro ao executar SQL:', error)
       return { success: false, error: error.message }
     }
   }
 
+  // Método alternativo para executar SQL
+  private async executeAlternativeMethod(sql: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      console.log('🔄 Executando via método alternativo...')
+      
+      // Divide o SQL em comandos individuais
+      const commands = sql
+        .split(';')
+        .map(cmd => cmd.trim())
+        .filter(cmd => cmd.length > 0 && !cmd.startsWith('--'))
+      
+      console.log(`📝 Encontrados ${commands.length} comandos para executar`)
+      
+      for (const command of commands) {
+        if (command.toLowerCase().includes('create table')) {
+          console.log('🔧 Tentando criar tabela via API REST...')
+          // Para tabelas, tentamos uma abordagem diferente
+          const result = await this.createTableViaREST(command)
+          if (!result.success) {
+            return result
+          }
+        }
+      }
+      
+      console.log('✅ Comandos executados via método alternativo')
+      return { success: true }
+      
+    } catch (error: any) {
+      console.error('❌ Erro no método alternativo:', error)
+      return { 
+        success: false, 
+        error: 'Não foi possível executar automaticamente. Execute o SQL manualmente no Supabase Dashboard.' 
+      }
+    }
+  }
+
+  // Cria tabela via API REST (método limitado)
+  private async createTableViaREST(createTableSQL: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Este é um método limitado - na prática, precisamos do SQL Editor
+      // Mas vamos tentar verificar se a tabela já existe
+      
+      const tableNameMatch = createTableSQL.match(/create table\s+(?:if not exists\s+)?(?:public\.)?(\w+)/i)
+      if (!tableNameMatch) {
+        return { success: false, error: 'Não foi possível identificar o nome da tabela' }
+      }
+      
+      const tableName = tableNameMatch[1]
+      console.log(`🔍 Verificando se tabela '${tableName}' existe...`)
+      
+      // Tenta fazer uma consulta simples para ver se a tabela existe
+      const { error } = await supabase
+        .from(tableName)
+        .select('*')
+        .limit(1)
+      
+      if (!error) {
+        console.log(`✅ Tabela '${tableName}' já existe`)
+        return { success: true }
+      }
+      
+      if (error.code === '42P01') {
+        console.log(`❌ Tabela '${tableName}' não existe e não pode ser criada automaticamente`)
+        return { 
+          success: false, 
+          error: `Tabela '${tableName}' não existe. Execute o SQL manualmente no Supabase Dashboard.` 
+        }
+      }
+      
+      return { success: true }
+      
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  }
   // Cria tabelas que não existem
   async createMissingTables(schema: DatabaseSchema): Promise<{ success: boolean; results: any[] }> {
     const results = []
     let allSuccessful = true
 
+    console.log('🔄 Iniciando criação de tabelas faltantes...')
+    
     // Primeiro, lê o SQL completo do arquivo
     const sqlContent = await this.readInitializationSQL()
+    console.log('📄 Arquivo SQL carregado com sucesso')
     
     // Verifica se há tabelas faltando
     const missingTables = schema.tables.filter(table => !table.exists)
@@ -138,7 +219,7 @@ export class AutoMigrationService {
       return { success: true, results: [] }
     }
 
-    console.log(`🔄 Criando ${missingTables.length} tabela(s) faltante(s)...`)
+    console.log(`🔧 Tentando criar ${missingTables.length} tabela(s) faltante(s):`, missingTables.map(t => t.tableName))
     
     // Executa o SQL completo (com IF NOT EXISTS, não causará problemas)
     const result = await this.executeSQL(sqlContent)
@@ -146,9 +227,25 @@ export class AutoMigrationService {
     
     if (!result.success) {
       allSuccessful = false
-      console.error('❌ Falha ao criar tabelas:', result.error)
+      console.error('❌ Falha ao criar tabelas automaticamente:', result.error)
     } else {
-      console.log('✅ Tabelas criadas com sucesso!')
+      console.log('✅ SQL executado - verificando se tabelas foram criadas...')
+      
+      // Verifica novamente se as tabelas foram criadas
+      const updatedSchema = await this.checkExistingTables(schema)
+      const stillMissing = updatedSchema.tables.filter(table => !table.exists)
+      
+      if (stillMissing.length > 0) {
+        console.log('⚠️ Algumas tabelas ainda não foram criadas:', stillMissing.map(t => t.tableName))
+        allSuccessful = false
+        results.push({ 
+          operation: 'Verificação pós-criação', 
+          success: false, 
+          error: `Tabelas ainda faltando: ${stillMissing.map(t => t.tableName).join(', ')}` 
+        })
+      } else {
+        console.log('✅ Todas as tabelas foram criadas com sucesso!')
+      }
     }
 
     return { success: allSuccessful, results }

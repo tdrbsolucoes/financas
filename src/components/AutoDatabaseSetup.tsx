@@ -56,6 +56,7 @@ const AutoDatabaseSetup: React.FC<AutoDatabaseSetupProps> = ({ onSetupComplete }
       addLog('🚀 Iniciando configuração automática...')
       
       const result = await autoMigrationService.autoInitializeDatabase()
+      addLog(`📊 Resultado da configuração: ${JSON.stringify(result)}`)
       
       if (result.success) {
         addLog('✅ Configuração automática concluída!')
@@ -64,10 +65,18 @@ const AutoDatabaseSetup: React.FC<AutoDatabaseSetupProps> = ({ onSetupComplete }
         setTimeout(() => onSetupComplete(), 2000)
       } else {
         addLog(`❌ Falha na configuração automática: ${result.message}`)
+        
+        // Verifica se é um problema de tabelas não criadas
+        if (result.message.includes('Tabela') || result.message.includes('tabela')) {
+          addLog('💡 Problema identificado: Tabelas não foram criadas automaticamente')
+          addLog('🔧 Solução: Execute o SQL manualmente no Supabase Dashboard')
+        }
+        
         setStatus('error')
         setMessage(result.message)
         
         if (result.needsManualSetup && result.sqlContent) {
+          addLog('📋 Preparando instruções para configuração manual...')
           setSqlContent(result.sqlContent)
           setShowManualSQL(true)
         }
