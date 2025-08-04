@@ -290,15 +290,15 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
   }
 
   return (
-    <div className="flex w-full h-screen overflow-hidden">
+    <div className="app-container">
       <Sidebar 
         currentPage={currentPage} 
         onPageChange={setCurrentPage}
         onLogout={handleLogout}
       />
       
-      <div className="flex-grow flex flex-col overflow-y-auto bg-background">
-        <div className="p-6 border-b border-border bg-card">
+      <div className="main-content">
+        <div className="header">
           <h2 className="text-3xl font-bold">
             {currentPage === 'dashboard' && 'Dashboard'}
             {currentPage === 'contacts' && 'Contatos'}
@@ -307,7 +307,7 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
           </h2>
         </div>
         
-        <div className="p-10 flex-grow pb-20 md:pb-10">
+        <div className="page-content">
           {renderCurrentPage()}
         </div>
       </div>
