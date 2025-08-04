@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS contacts (
   name text NOT NULL,
   type contact_type NOT NULL,
   email text,
+  phone text,
   recurring_charge jsonb
 );
 
