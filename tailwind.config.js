@@ -18,9 +18,6 @@ export default {
       },
     },
     extend: {
-      width: {
-        '70': '17.5rem', // 280px para sidebar
-      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

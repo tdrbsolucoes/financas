@@ -88,36 +88,28 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 grid place-items-center z-50 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="max-w-lg p-0 rounded-xl overflow-hidden w-[95%] max-w-[95vw] mx-4">
-        <div className="bg-card p-6 border-b border-border mb-0">
-          <h3 className="text-xl font-semibold text-foreground m-0">Cadastro de {contact ? 'Edição de ' : ''}Cliente</h3>
-          <button className="absolute top-4 right-4 bg-transparent border-none text-xl cursor-pointer text-muted-foreground" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-content modern-modal">
+        <div className="modal-header modern-header">
+          <h3>Cadastro de {contact ? 'Edição de ' : ''}Cliente</h3>
+          <button className="close-button" onClick={onClose}>
             <X size={20} />
           </button>
         </div>
 
-        <form className="p-8 bg-card flex flex-col gap-2" onSubmit={handleSubmit}>
+        <form className="modern-form" onSubmit={handleSubmit}>
           {/* Tipo de Contato - Botões Modernos */}
-          <div className="flex gap-3 mb-6">
+          <div className="type-selector-modern">
             <button
               type="button"
-              className={`flex-1 p-3 border rounded-lg font-medium cursor-pointer transition-all duration-200 ${
-                formData.type === 'cliente' 
-                  ? 'bg-primary text-primary-foreground border-primary' 
-                  : 'border-border bg-card text-muted-foreground hover:border-primary hover:bg-accent'
-              }`}
+              className={`type-button-modern ${formData.type === 'cliente' ? 'active' : ''}`}
               onClick={() => setFormData(prev => ({ ...prev, type: 'cliente' }))}
             >
               Pessoa Física
             </button>
             <button
               type="button"
-              className={`flex-1 p-3 border rounded-lg font-medium cursor-pointer transition-all duration-200 ${
-                formData.type === 'empresa' 
-                  ? 'bg-primary text-primary-foreground border-primary' 
-                  : 'border-border bg-card text-muted-foreground hover:border-primary hover:bg-accent'
-              }`}
+              className={`type-button-modern ${formData.type === 'empresa' ? 'active' : ''}`}
               onClick={() => setFormData(prev => ({ ...prev, type: 'empresa' }))}
             >
               Pessoa Jurídica
@@ -125,12 +117,11 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
           </div>
 
           {/* Nome Completo */}
-          <div className="flex flex-col gap-1.5 mb-4 relative">
-            <label htmlFor="name" className="font-medium text-xs text-foreground absolute -top-2 left-3 bg-card px-1 z-10">Nome Completo</label>
+          <div className="form-group-modern">
+            <label htmlFor="name">Nome Completo</label>
             <input
               id="name"
               type="text"
-              className="p-3 border border-border bg-input text-foreground rounded-lg text-base transition-colors focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)]"
               placeholder="Ex: João da Silva"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
@@ -139,12 +130,11 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
           </div>
 
           {/* Telefone */}
-          <div className="flex flex-col gap-1.5 mb-4 relative">
-            <label htmlFor="phone" className="font-medium text-xs text-foreground absolute -top-2 left-3 bg-card px-1 z-10">Telefone</label>
+          <div className="form-group-modern">
+            <label htmlFor="phone">Telefone</label>
             <input
               id="phone"
               type="tel"
-              className="p-3 border border-border bg-input text-foreground rounded-lg text-base transition-colors focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)]"
               placeholder="(00) 00000-0000"
               value={formData.phone}
               onChange={handlePhoneChange}
@@ -153,26 +143,24 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
           </div>
 
           {/* Checkbox Faturamento Recorrente */}
-          <div className="flex items-center gap-3 py-2">
+          <div className="checkbox-modern">
             <input
               id="recurring"
               type="checkbox"
-              className="w-4.5 h-4.5 accent-primary cursor-pointer"
               checked={formData.recurringActive}
               onChange={(e) => setFormData(prev => ({ ...prev, recurringActive: e.target.checked }))}
             />
-            <label htmlFor="recurring" className="font-medium text-foreground cursor-pointer select-none">Adicionar Faturamento Recorrente</label>
+            <label htmlFor="recurring">Adicionar Faturamento Recorrente</label>
           </div>
 
           {/* Seção Recorrente */}
           {formData.recurringActive && (
-            <div className="flex flex-col gap-3 p-6 bg-muted rounded-lg border border-border mt-2">
-              <div className="flex flex-col gap-1.5 mb-4 relative">
-                <label htmlFor="recurringLaunchDay" className="font-medium text-xs text-foreground absolute -top-2 left-3 bg-muted px-1 z-10">Dia de Lançamento</label>
+            <div className="recurring-section-modern">
+              <div className="form-group-modern">
+                <label htmlFor="recurringLaunchDay">Dia de Lançamento</label>
                 <input
                   id="recurringLaunchDay"
                   type="number"
-                  className="p-3 border border-border bg-input text-foreground rounded-lg text-base transition-colors focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)]"
                   min="1"
                   max="31"
                   placeholder="Ex: 5"
@@ -181,12 +169,11 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5 mb-4 relative">
-                <label htmlFor="recurringDueDay" className="font-medium text-xs text-foreground absolute -top-2 left-3 bg-muted px-1 z-10">Dia de Pagamento</label>
+              <div className="form-group-modern">
+                <label htmlFor="recurringDueDay">Dia de Pagamento</label>
                 <input
                   id="recurringDueDay"
                   type="number"
-                  className="p-3 border border-border bg-input text-foreground rounded-lg text-base transition-colors focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)]"
                   min="1"
                   max="31"
                   placeholder="Ex: 15"
@@ -195,12 +182,11 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5 mb-4 relative">
-                <label htmlFor="recurringAmount" className="font-medium text-xs text-foreground absolute -top-2 left-3 bg-muted px-1 z-10">Valor (R$)</label>
+              <div className="form-group-modern">
+                <label htmlFor="recurringAmount">Valor (R$)</label>
                 <input
                   id="recurringAmount"
                   type="number"
-                  className="p-3 border border-border bg-input text-foreground rounded-lg text-base transition-colors focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)]"
                   step="0.01"
                   min="0"
                   placeholder="Ex: 250,00"
@@ -213,7 +199,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
           )}
 
           {/* Botão de Submit */}
-          <button type="submit" className="w-full p-3.5 bg-gray-600 text-white border-none rounded-lg text-base font-semibold cursor-pointer transition-colors hover:bg-gray-700 mt-2">
+          <button type="submit" className="submit-button-modern">
             Cadastrar Cliente
           </button>
         </form>

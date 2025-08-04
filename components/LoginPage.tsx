@@ -41,21 +41,20 @@ const LoginPage: React.FC = () => {
           <h1>Finanças</h1>
         </div>
         
-        <h2 className="text-center text-xl mb-8 text-muted-foreground">{isLogin ? 'Entrar' : 'Criar Conta'}</h2>
+        <h2>{isLogin ? 'Entrar' : 'Criar Conta'}</h2>
         
         {error && (
-          <div className="bg-destructive/20 text-destructive p-3 rounded-lg mb-4 text-center text-sm">
+          <div className="error-message">
             {error}
           </div>
         )}
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email" className="form-label">Email</label>
+            <label htmlFor="email">Email</label>
             <input
               id="email"
               type="email"
-              className="form-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -64,11 +63,10 @@ const LoginPage: React.FC = () => {
           </div>
           
           <div className="form-group">
-            <label htmlFor="password" className="form-label">Senha</label>
+            <label htmlFor="password">Senha</label>
             <input
               id="password"
               type="password"
-              className="form-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -79,21 +77,19 @@ const LoginPage: React.FC = () => {
           
           <button 
             type="submit" 
-            className="form-button"
+            className="login-button"
             disabled={loading}
           >
             {loading ? 'Carregando...' : (isLogin ? 'Entrar' : 'Criar Conta')}
           </button>
         </form>
         
-        <div className="divider">
-          ou
-        </div>
+        <div className="divider">ou</div>
         
         <button
           type="button"
           onClick={() => setIsLogin(!isLogin)}
-          className="form-button bg-card text-foreground border border-border hover:bg-accent hover:text-accent-foreground"
+          className="google-login-button"
           disabled={loading}
         >
           {isLogin ? 'Criar nova conta' : 'Já tenho uma conta'}

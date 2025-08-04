@@ -167,7 +167,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
       </div>
 
       <div className="dashboard-grid">
-        <div className="stat-card">
+        <div className="card stat-card">
           <div className="value income">{formatCurrency(reports.totalIncome)}</div>
           <div className="label">
             <TrendingUp size={16} />
@@ -178,7 +178,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
           </div>
         </div>
 
-        <div className="stat-card">
+        <div className="card stat-card">
           <div className="value expense">{formatCurrency(reports.totalExpenses)}</div>
           <div className="label">
             <TrendingDown size={16} />
@@ -189,7 +189,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
           </div>
         </div>
 
-        <div className="stat-card">
+        <div className="card stat-card">
           <div className={`value ${reports.balance >= 0 ? 'income' : 'expense'}`}>
             {formatCurrency(reports.balance)}
           </div>
@@ -202,7 +202,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
           </div>
         </div>
 
-        <div className="stat-card">
+        <div className="card stat-card">
           <div className="value">{reports.overdueTransactions.length}</div>
           <div className="label">
             <AlertTriangle size={16} />
@@ -218,7 +218,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '2rem' }}>
         <div className="card">
           <h3>Contas a Receber</h3>
           {reports.pendingIncome.length === 0 ? (
@@ -240,7 +240,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 </div>
               ))}
               {reports.pendingIncome.length > 5 && (
-                <p className="text-center text-muted-foreground mt-4">
+                <p style={{ textAlign: 'center', color: 'var(--muted-foreground)', marginTop: '1rem' }}>
                   E mais {reports.pendingIncome.length - 5} contas...
                 </p>
               )}
@@ -269,7 +269,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 </div>
               ))}
               {reports.pendingExpenses.length > 5 && (
-                <p className="text-center text-muted-foreground mt-4">
+                <p style={{ textAlign: 'center', color: 'var(--muted-foreground)', marginTop: '1rem' }}>
                   E mais {reports.pendingExpenses.length - 5} contas...
                 </p>
               )}
@@ -279,8 +279,8 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
       </div>
 
       {reports.overdueTransactions.length > 0 && (
-        <div className="card mt-6">
-          <h3 className="text-destructive flex items-center gap-2">
+        <div className="card" style={{ marginTop: '1.5rem' }}>
+          <h3 style={{ color: 'var(--destructive)' }}>
             <AlertTriangle size={20} />
             Transações Vencidas
           </h3>

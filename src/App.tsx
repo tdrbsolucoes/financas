@@ -116,10 +116,9 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
       </div>
     </div>
   )
-  onDatabaseError?: (error: any) => void
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user }) => {
+function App() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState<Page>('dashboard')
@@ -168,13 +167,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   if (loading) {
     return (
-      <div className="w-full h-screen grid place-items-center bg-background">
-        <div className="w-full max-w-md p-10 bg-card border border-border rounded-lg shadow-lg">
-          <div className="flex items-center gap-3 mb-6 justify-center">
-            <div className="text-2xl bg-primary text-primary-foreground rounded-lg w-10 h-10 grid place-items-center font-bold">F</div>
+      <div className="login-container">
+        <div className="login-box">
+          <div className="logo-container">
+            <div className="logo">F</div>
             <h1>Finanças</h1>
           </div>
-          <p className="text-center text-muted-foreground">
+          <p style={{ textAlign: 'center', color: 'var(--muted-foreground)' }}>
             Carregando...
           </p>
         </div>
@@ -190,22 +189,38 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   // Verificar se há erro de banco (tabelas não existem)
   if (showDatabaseError) {
     return (
-      <div className="w-full h-screen grid place-items-center bg-background">
-        <div className="w-full max-w-3xl p-10 bg-card border border-border rounded-lg shadow-lg">
-          <div className="flex items-center gap-3 mb-6 justify-center">
-            <div className="text-2xl bg-primary text-primary-foreground rounded-lg w-10 h-10 grid place-items-center font-bold">F</div>
+      <div className="login-container">
+        <div className="login-box" style={{ maxWidth: '700px' }}>
+          <div className="logo-container">
+            <div className="logo">F</div>
             <h1>Finanças</h1>
           </div>
-          <div className="bg-destructive/20 text-destructive p-3 rounded-lg mb-4 text-center text-sm">
-            <h3 className="text-lg font-semibold mb-4">⚠️ Tabelas do banco não encontradas</h3>
+          <div className="error-message">
+            <h3>⚠️ Tabelas do banco não encontradas</h3>
             <p>Execute este comando na raiz do projeto:</p>
-            <div className="bg-muted p-4 rounded-lg text-sm mt-4 font-mono">
+            <div style={{ 
+              background: 'var(--muted)', 
+              padding: '1rem', 
+              borderRadius: 'var(--radius)', 
+              fontSize: '0.9rem',
+              marginTop: '1rem',
+              fontFamily: 'monospace'
+            }}>
               <code>node setupDatabase.js</code>
             </div>
-            <p className="mt-4 text-sm">
+            <p style={{ marginTop: '1rem', fontSize: '0.9rem' }}>
               Ou execute o SQL manualmente no Supabase Dashboard:
             </p>
-            <div className="bg-muted p-4 rounded-lg text-xs max-h-48 overflow-y-auto mt-4 font-mono">
+            <div style={{ 
+              background: 'var(--muted)', 
+              padding: '1rem', 
+              borderRadius: 'var(--radius)', 
+              fontSize: '0.8rem',
+              maxHeight: '200px',
+              overflowY: 'auto',
+              marginTop: '1rem',
+              fontFamily: 'monospace'
+            }}>
               <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
 {`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -245,8 +260,9 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
               </pre>
             </div>
             <button 
-              className="w-full p-3 border-none rounded-lg bg-primary text-primary-foreground text-base font-semibold cursor-pointer transition-all hover:brightness-110 mt-4"
+              className="login-button"
               onClick={() => window.location.reload()}
+              style={{ marginTop: '1rem' }}
             >
               Verificar Novamente
             </button>
@@ -269,6 +285,10 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
   const renderCurrentPage = () => {
     // Interceptar erros de tabelas não encontradas
     const handleDatabaseError = (error: any) => {
+      if (error?.message?.includes('relation') && error?.message?.includes('does not exist')) {
+        setShowDatabaseError(true)
+        return
+      }
       throw error
     }
 
@@ -296,7 +316,7 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
       
       <div className="main-content">
         <div className="header">
-          <h2 className="text-3xl font-bold">
+          <h2>
             {currentPage === 'dashboard' && 'Dashboard'}
             {currentPage === 'contacts' && 'Contatos'}
             {currentPage === 'financial' && 'Financeiro'}
