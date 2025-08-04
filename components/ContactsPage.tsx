@@ -43,7 +43,7 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
       if (editingContact) {
         // Remove user_id from update data to prevent empty string UUID error
         const { user_id, ...updateData } = contactData
-        const { data, error } = await contactsService.updateContact(editingContact.id, contactData)
+        const { data, error } = await contactsService.updateContact(editingContact.id, updateData)
         if (error) throw error
         
         setContacts(prev => prev.map(c => c.id === editingContact.id ? data : c))
