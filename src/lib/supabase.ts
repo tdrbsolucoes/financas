@@ -20,7 +20,7 @@ export interface Database {
           created_at: string;
           name: string;
           type: 'empresa' | 'cliente';
-          email: string | null;
+          email: string | null; // Temporariamente usado para phone
           recurring_charge: {
             isActive: boolean;
             amount: number;
@@ -34,7 +34,7 @@ export interface Database {
           created_at?: string;
           name: string;
           type: 'empresa' | 'cliente';
-          email?: string | null;
+          email?: string | null; // Temporariamente usado para phone
           recurring_charge?: {
             isActive: boolean;
             amount: number;
@@ -48,7 +48,7 @@ export interface Database {
           created_at?: string;
           name?: string;
           type?: 'empresa' | 'cliente';
-          email?: string | null;
+          email?: string | null; // Temporariamente usado para phone
           recurring_charge?: {
             isActive: boolean;
             amount: number;

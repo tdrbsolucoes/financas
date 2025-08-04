@@ -48,10 +48,61 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
       
       setTransactions(transactionsResult.data || [])
       setContacts(contactsResult.data || [])
+      
+      // Gerar transações recorrentes se necessário
+      await generateRecurringTransactions(contactsResult.data || [])
     } catch (error: any) {
       setError(error.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const generateRecurringTransactions = async (contacts: Contact[]) => {
+    const now = new Date()
+    const currentMonth = now.getMonth()
+    const currentYear = now.getFullYear()
+    
+    for (const contact of contacts) {
+      if (contact.recurring_charge?.isActive) {
+        const launchDay = contact.recurring_charge.launchDay
+        const dueDay = contact.recurring_charge.dueDay
+        const amount = contact.recurring_charge.amount
+        
+        // Verificar se já existe transação para este mês
+        const existingTransaction = transactions.find(t => 
+          t.contact_id === contact.id &&
+          t.is_recurring &&
+          new Date(t.date).getMonth() === currentMonth &&
+          new Date(t.date).getFullYear() === currentYear
+        )
+        
+        if (!existingTransaction && now.getDate() >= launchDay) {
+          // Criar transação recorrente
+          const launchDate = new Date(currentYear, currentMonth, launchDay)
+          const dueDate = new Date(currentYear, currentMonth, dueDay)
+          
+          try {
+            const { data, error } = await transactionsService.createTransaction({
+              user_id: user.id,
+              description: `Cobrança mensal - ${contact.name}`,
+              amount: amount,
+              date: launchDate.toISOString().split('T')[0],
+              due_date: dueDate.toISOString().split('T')[0],
+              type: 'income',
+              is_paid: false,
+              is_recurring: true,
+              contact_id: contact.id
+            })
+            
+            if (!error && data) {
+              setTransactions(prev => [data, ...prev])
+            }
+          } catch (error) {
+            console.error('Erro ao gerar transação recorrente:', error)
+          }
+        }
+      }
     }
   }
 

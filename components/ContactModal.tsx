@@ -12,7 +12,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
   const [formData, setFormData] = useState({
     name: '',
     type: 'empresa' as 'empresa' | 'cliente',
-    email: '',
+    phone: '',
     recurringActive: false,
     recurringAmount: '',
     recurringLaunchDay: '1',
@@ -24,7 +24,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
       setFormData({
         name: contact.name,
         type: contact.type,
-        email: contact.email || '',
+        phone: contact.email || '', // Temporariamente usando email como phone até migração
         recurringActive: contact.recurring_charge?.isActive || false,
         recurringAmount: contact.recurring_charge?.amount?.toString() || '',
         recurringLaunchDay: contact.recurring_charge?.launchDay?.toString() || '1',
@@ -33,14 +33,46 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
     }
   }, [contact])
 
+  const formatPhone = (value: string) => {
+    // Remove tudo que não é número
+    const numbers = value.replace(/\D/g, '')
+    
+    // Aplica a máscara (11) 99999-9999
+    if (numbers.length <= 11) {
+      return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
+        .replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3')
+        .replace(/(\d{2})(\d{0,5})/, '($1) $2')
+        .replace(/(\d{0,2})/, '($1')
+    }
+    return value
+  }
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhone(e.target.value)
+    setFormData(prev => ({ ...prev, phone: formatted }))
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validar campos obrigatórios
+    if (!formData.name.trim()) {
+      alert('Nome é obrigatório')
+      return
+    }
+    
+    if (formData.recurringActive) {
+      if (!formData.recurringAmount || parseFloat(formData.recurringAmount) <= 0) {
+        alert('Valor da cobrança recorrente é obrigatório')
+        return
+      }
+    }
     
     const contactData: Omit<Contact, 'id' | 'created_at'> = {
       user_id: '', // Será preenchido pelo componente pai
       name: formData.name,
       type: formData.type,
-      email: formData.email || undefined,
+      email: formData.phone || undefined, // Temporariamente salvando phone no campo email
       recurring_charge: formData.recurringActive ? {
         isActive: true,
         amount: parseFloat(formData.recurringAmount),
@@ -53,7 +85,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
   }
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content">
         <div className="modal-header">
           <h3>{contact ? 'Editar Contato' : 'Novo Contato'}</h3>
@@ -97,12 +129,14 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="phone">Celular</label>
             <input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              id="phone"
+              type="tel"
+              placeholder="(11) 99999-9999"
+              value={formData.phone}
+              onChange={handlePhoneChange}
+              maxLength={15}
             />
           </div>
 
@@ -120,7 +154,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
             {formData.recurringActive && (
               <div className="recurring-fields">
                 <div className="form-group">
-                  <label htmlFor="recurringAmount">Valor (R$) *</label>
+                  <label htmlFor="recurringAmount">Valor Mensal (R$) *</label>
                   <input
                     id="recurringAmount"
                     type="number"
@@ -133,7 +167,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="recurringLaunchDay">Dia do Lançamento</label>
+                  <label htmlFor="recurringLaunchDay">Dia Lançamento</label>
                   <select
                     id="recurringLaunchDay"
                     value={formData.recurringLaunchDay}
@@ -146,7 +180,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="recurringDueDay">Dia do Vencimento</label>
+                  <label htmlFor="recurringDueDay">Dia Vencimento</label>
                   <select
                     id="recurringDueDay"
                     value={formData.recurringDueDay}

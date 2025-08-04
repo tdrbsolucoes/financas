@@ -160,12 +160,9 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
                   {contact.recurring_charge?.isActive && (
                     <div className="recurring-tag">
                       <RefreshCw size={14} />
-                      Cobrança recorrente: {formatCurrency(contact.recurring_charge.amount)}
-                      <br />
-                      <small>
-                        Lançamento: dia {contact.recurring_charge.launchDay} • 
-                        Vencimento: dia {contact.recurring_charge.dueDay}
-                      </small>
+                      {formatCurrency(contact.recurring_charge.amount)} • 
+                      Lanç: {contact.recurring_charge.launchDay} • 
+                      Venc: {contact.recurring_charge.dueDay}
                     </div>
                   )}
                 </div>
