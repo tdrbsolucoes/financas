@@ -27,7 +27,7 @@ export interface Database {
             launchDay: number;
             dueDay: number;
           } | null;
-          phone: string | null;
+          phone?: string | null;
         };
         Insert: {
           id?: string;

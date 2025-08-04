@@ -69,7 +69,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
       user_id: '',
       name: formData.name,
       type: formData.type,
-      phone: formData.phone || undefined,
+      phone: formData.phone || null,
       recurring_charge: formData.recurringActive ? {
         isActive: true,
         amount: parseFloat(formData.recurringAmount),
