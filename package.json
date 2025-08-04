@@ -17,6 +17,7 @@
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
     "@supabase/supabase-js": "^2.53.0",
+    "@tailwindcss/postcss": "^4.1.11",
     "autoprefixer": "^10.4.21",
     "dotenv": "^16.4.5",
     "lucide-react": "^0.536.0",
