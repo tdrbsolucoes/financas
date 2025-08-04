@@ -103,7 +103,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
                 className={`contact-type-button ${formData.type === 'empresa' ? 'active' : ''}`}
                 onClick={() => setFormData(prev => ({ ...prev, type: 'empresa' }))}
               >
-                <Building />
+                <Building size={18} />
                 Empresa
               </button>
               <button
@@ -111,7 +111,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
                 className={`contact-type-button ${formData.type === 'cliente' ? 'active' : ''}`}
                 onClick={() => setFormData(prev => ({ ...prev, type: 'cliente' }))}
               >
-                <User />
+                <User size={18} />
                 Cliente
               </button>
             </div>
@@ -147,19 +147,21 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
             />
           </div>
 
-          <div className="recurring-form-section">
-            <div className="recurring-toggle">
-              <label htmlFor="recurringActive">Cobrança Recorrente</label>
-              <input
-                id="recurringActive"
-                type="checkbox"
-                checked={formData.recurringActive}
-                onChange={(e) => setFormData(prev => ({ ...prev, recurringActive: e.target.checked }))}
-              />
+          <div className="recurring-section">
+            <div className="recurring-header">
+              <h4>Cobrança Recorrente</h4>
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={formData.recurringActive}
+                  onChange={(e) => setFormData(prev => ({ ...prev, recurringActive: e.target.checked }))}
+                />
+                <span className="toggle-slider"></span>
+              </label>
             </div>
 
             {formData.recurringActive && (
-              <div className="recurring-fields">
+              <div className="recurring-form">
                 <div className="form-group">
                   <label htmlFor="recurringAmount">Valor Mensal (R$) *</label>
                   <input
@@ -173,35 +175,43 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="recurringLaunchDay">Dia Lançamento</label>
-                  <select
-                    id="recurringLaunchDay"
-                    value={formData.recurringLaunchDay}
-                    onChange={(e) => setFormData(prev => ({ ...prev, recurringLaunchDay: e.target.value }))}
-                  >
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                      <option key={day} value={day}>{day}</option>
-                    ))}
-                  </select>
-                </div>
 
-                <div className="form-group">
-                  <label htmlFor="recurringDueDay">Dia Vencimento</label>
-                  <select
-                    id="recurringDueDay"
-                    value={formData.recurringDueDay}
-                    onChange={(e) => setFormData(prev => ({ ...prev, recurringDueDay: e.target.value }))}
-                  >
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                      <option key={day} value={day}>{day}</option>
-                    ))}
-                  </select>
+                <div className="days-grid">
+                  <div className="form-group">
+                    <label htmlFor="recurringLaunchDay">Dia Lançamento</label>
+                    <select
+                      id="recurringLaunchDay"
+                      value={formData.recurringLaunchDay}
+                      onChange={(e) => setFormData(prev => ({ ...prev, recurringLaunchDay: e.target.value }))}
+                    >
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                        <option key={day} value={day}>{day}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="recurringDueDay">Dia Vencimento</label>
+                    <select
+                      id="recurringDueDay"
+                      value={formData.recurringDueDay}
+                      onChange={(e) => setFormData(prev => ({ ...prev, recurringDueDay: e.target.value }))}
+                    >
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                        <option key={day} value={day}>{day}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
+          <div className="modal-actions">
+            <button type="submit" className="form-button primary">
+              {contact ? 'Alterar' : 'Incluir'}
+            </button>
+          </div>
         </form>
       </div>
     </div>

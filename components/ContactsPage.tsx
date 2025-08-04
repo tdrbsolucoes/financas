@@ -111,19 +111,7 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
         </div>
       )}
 
-      <div className="page-header">
-        <button
-          className="form-button"
-          onClick={() => {
-            setEditingContact(null)
-            setShowModal(true)
-          }}
-          style={{ marginBottom: '1rem' }}
-        >
-          <Plus size={16} />
-          Criar Contato
-        </button>
-        
+      <div className="page-header">        
         <div className="filter-buttons">
           <button
             className={filter === 'all' ? 'active' : ''}
@@ -202,6 +190,15 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
         )}
       </div>
 
+      <button
+        className="fab"
+        onClick={() => {
+          setEditingContact(null)
+          setShowModal(true)
+        }}
+      >
+        <Plus />
+      </button>
 
       {showModal && (
         <ContactModal

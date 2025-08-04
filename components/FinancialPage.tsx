@@ -337,92 +337,69 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
             </p>
           </div>
         ) : (
-          <table className="financial-table">
-            <thead>
-              <tr>
-                <th>
-                  <input
-                    type="checkbox"
-                    className="status-checkbox"
-                    title="Marcar/Desmarcar todos"
-                  />
-                </th>
-                {visibleColumns.description && <th>Descrição</th>}
-                {visibleColumns.amount && <th>Valor</th>}
-                {visibleColumns.date && <th>Data</th>}
-                {visibleColumns.dueDate && <th>Vencimento</th>}
-                {visibleColumns.type && <th>Tipo</th>}
-                {visibleColumns.status && <th>Status</th>}
-                {visibleColumns.contact && <th>Contato</th>}
-                {visibleColumns.actions && <th>Ações</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTransactions.map((transaction) => (
-                <tr 
-                  key={transaction.id} 
-                  className={`transaction-row ${transaction.is_paid ? 'paid' : ''}`}
-                >
-                  <td>
+          <div className="transactions-grid">
+            {filteredTransactions.map((transaction) => (
+              <div 
+                key={transaction.id} 
+                className={`transaction-card ${transaction.is_paid ? 'paid' : ''}`}
+              >
+                <div className="transaction-header">
+                  <div className="transaction-info">
+                    <h4 className="transaction-description">{transaction.description}</h4>
+                    <div className="transaction-meta">
+                      <span className="transaction-contact">
+                        {transaction.contact?.name || 'Sem contato'}
+                      </span>
+                      <span className="transaction-type">
+                        {transaction.type === 'income' ? 'Receita' : 'Despesa'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="transaction-amount">
+                    <span className={`amount ${transaction.type}`}>
+                      {formatCurrency(Number(transaction.amount))}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="transaction-footer">
+                  <div className="transaction-dates">
+                    <span>Data: {formatDate(transaction.date)}</span>
+                    <span>Venc: {formatDate(transaction.due_date)}</span>
+                    {getStatusBadge(transaction)}
+                  </div>
+                  
+                  <div className="transaction-actions">
                     <button
                       className="action-button pay-button"
                       onClick={() => handleTogglePaid(transaction)}
                       title={transaction.is_paid ? 'Marcar como não pago' : 'Marcar como pago'}
                     >
-                      {transaction.is_paid ? <X size={18} /> : <Check size={18} />}
+                      {transaction.is_paid ? <X size={16} /> : <Check size={16} />}
                     </button>
-                  </td>
-                  {visibleColumns.description && (
-                    <td>{transaction.description}</td>
-                  )}
-                  {visibleColumns.amount && (
-                    <td className={`amount ${transaction.type}`}>
-                      {formatCurrency(Number(transaction.amount))}
-                    </td>
-                  )}
-                  {visibleColumns.date && (
-                    <td>{formatDate(transaction.date)}</td>
-                  )}
-                  {visibleColumns.dueDate && (
-                    <td>{formatDate(transaction.due_date)}</td>
-                  )}
-                  {visibleColumns.type && (
-                    <td>{transaction.type === 'income' ? 'Receita' : 'Despesa'}</td>
-                  )}
-                  {visibleColumns.status && (
-                    <td>{getStatusBadge(transaction)}</td>
-                  )}
-                  {visibleColumns.contact && (
-                    <td>{transaction.contact?.name || '-'}</td>
-                  )}
-                  {visibleColumns.actions && (
-                    <td>
-                      <div className="item-actions">
-                        <button
-                          className="action-button"
-                          onClick={() => {
-                            setEditingTransaction(transaction)
-                            setShowModal(true)
-                          }}
-                        >
-                          <Edit size={18} />
-                        </button>
-                        <button
-                          className="action-button"
-                          onClick={() => {
-                            setTransactionToDelete(transaction)
-                            setShowDeleteModal(true)
-                          }}
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <button
+                      className="action-button"
+                      onClick={() => {
+                        setEditingTransaction(transaction)
+                        setShowModal(true)
+                      }}
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      className="action-button"
+                      onClick={() => {
+                        setTransactionToDelete(transaction)
+                        setShowDeleteModal(true)
+                      }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
