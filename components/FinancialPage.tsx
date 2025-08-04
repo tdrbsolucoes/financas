@@ -40,7 +40,101 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [transactionsResult, contactsResult] = await Promise.all([
+      
+      // Primeiro carregar contatos
+      const contactsResult = await contactsService.getContacts(user.id)
+      if (contactsResult.error) throw contactsResult.error
+      setContacts(contactsResult.data || [])
+      
+      // Depois gerar transações recorrentes se necessário
+      await generateRecurringTransactions(contactsResult.data || [])
+      
+      // Por último carregar todas as transações (incluindo as recém-criadas)
+      const transactionsResult = await transactionsService.getTransactions(user.id)
+      if (transactionsResult.error) throw transactionsResult.error
+      setTransactions(transactionsResult.data || [])
+      
+    } catch (error: any) {
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Função separada para recarregar apenas transações (sem gerar recorrentes)
+  const reloadTransactions = async () => {
+    try {
+      const transactionsResult = await transactionsService.getTransactions(user.id)
+      if (transactionsResult.error) throw transactionsResult.error
+      setTransactions(transactionsResult.data || [])
+    } catch (error: any) {
+      setError(error.message)
+    }
+  }
+
+  const handleSaveTransaction = async (transactionData: Omit<Transaction, 'id' | 'created_at'>) => {
+    try {
+      if (editingTransaction) {
+        const { data, error } = await transactionsService.updateTransaction(editingTransaction.id, transactionData)
+        if (error) throw error
+        
+        // Recarregar transações para manter sincronia
+        await reloadTransactions()
+      } else {
+        const { data, error } = await transactionsService.createTransaction({
+          ...transactionData,
+          user_id: user.id
+        })
+        if (error) throw error
+        
+        // Recarregar transações para manter sincronia
+        await reloadTransactions()
+      }
+      
+      setShowModal(false)
+      setEditingTransaction(null)
+    } catch (error: any) {
+      setError(error.message)
+    }
+  }
+
+  const handleDeleteTransaction = async () => {
+    if (!transactionToDelete) return
+
+    try {
+      const { error } = await transactionsService.deleteTransaction(transactionToDelete.id)
+      if (error) throw error
+      
+      // Recarregar transações para manter sincronia
+      await reloadTransactions()
+      setShowDeleteModal(false)
+      setTransactionToDelete(null)
+    } catch (error: any) {
+      setError(error.message)
+    }
+  }
+
+  const handleTogglePaid = async (transaction: Transaction) => {
+    try {
+      if (transaction.is_paid) {
+        // Marcar como não pago
+        const { data, error } = await transactionsService.updateTransaction(transaction.id, {
+          is_paid: false,
+          paid_date: undefined
+        })
+        if (error) throw error
+      } else {
+        // Marcar como pago
+        const { data, error } = await transactionsService.markAsPaid(transaction.id, new Date().toISOString().split('T')[0])
+        if (error) throw error
+      }
+      
+      // Recarregar transações para manter sincronia
+      await reloadTransactions()
+    } catch (error: any) {
+      setError(error.message)
+    }
+  }
         transactionsService.getTransactions(user.id),
         contactsService.getContacts(user.id)
       ])
@@ -65,6 +159,9 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
     const currentMonth = now.getMonth()
     const currentYear = now.getFullYear()
     
+    // Buscar todas as transações existentes uma vez
+    const { data: existingTransactions } = await transactionsService.getTransactions(user.id)
+    
     for (const contact of contacts) {
       if (contact.recurring_charge?.isActive) {
         const launchDay = contact.recurring_charge.launchDay
@@ -72,13 +169,14 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
         const amount = contact.recurring_charge.amount
         
         // Verificar se já existe transação para este mês
-        const existingTransaction = transactions.find(t => 
+        const existingTransaction = existingTransactions?.find(t => 
           t.contact_id === contact.id &&
           t.is_recurring &&
           new Date(t.date).getMonth() === currentMonth &&
           new Date(t.date).getFullYear() === currentYear
         )
         
+        // Só criar se não existir e se já passou do dia de lançamento
         if (!existingTransaction && now.getDate() >= launchDay) {
           // Criar transação recorrente
           const launchDate = new Date(currentYear, currentMonth, launchDay)
@@ -99,6 +197,7 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
             
             if (!error && data) {
               setTransactions(prev => [data, ...prev])
+              console.log(`Transação recorrente criada para ${contact.name}: ${formatCurrency(amount)}`)
             }
           } catch (error) {
             console.error('Erro ao gerar transação recorrente:', error)
