@@ -20,14 +20,14 @@ export interface Database {
           created_at: string;
           name: string;
           type: 'empresa' | 'cliente';
-          email: string | null; // Temporariamente usado para phone
+          email: string | null;
+          phone: string | null;
           recurring_charge: {
             isActive: boolean;
             amount: number;
             launchDay: number;
             dueDay: number;
           } | null;
-          phone?: string | null;
         };
         Insert: {
           id?: string;
@@ -35,7 +35,7 @@ export interface Database {
           created_at?: string;
           name: string;
           type: 'empresa' | 'cliente';
-          email?: string | null; // Temporariamente usado para phone
+          email?: string | null;
           phone?: string | null;
           recurring_charge?: {
             isActive: boolean;
@@ -50,7 +50,7 @@ export interface Database {
           created_at?: string;
           name?: string;
           type?: 'empresa' | 'cliente';
-          email?: string | null; // Temporariamente usado para phone
+          email?: string | null;
           phone?: string | null;
           recurring_charge?: {
             isActive: boolean;

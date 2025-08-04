@@ -156,6 +156,7 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
                   <p>
                     {contact.type === 'empresa' ? 'Empresa' : 'Cliente'}
                     {contact.phone && ` • ${contact.phone}`}
+                    {contact.email && ` • ${contact.email}`}
                   </p>
                   {contact.recurring_charge?.isActive && (
                     <div className="recurring-tag">

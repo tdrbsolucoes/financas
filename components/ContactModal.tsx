@@ -12,6 +12,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
   const [formData, setFormData] = useState({
     name: '',
     type: 'cliente' as 'empresa' | 'cliente',
+    email: '',
     phone: '',
     recurringActive: false,
     recurringAmount: '',
@@ -24,6 +25,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
       setFormData({
         name: contact.name,
         type: contact.type,
+        email: contact.email || '',
         phone: contact.phone || '',
         recurringActive: contact.recurring_charge?.isActive || false,
         recurringAmount: contact.recurring_charge?.amount?.toString() || '',
@@ -69,6 +71,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
       user_id: '',
       name: formData.name,
       type: formData.type,
+      email: formData.email || null,
       phone: formData.phone || null,
       recurring_charge: formData.recurringActive ? {
         isActive: true,
@@ -120,6 +123,18 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               required
+            />
+          </div>
+
+          {/* Email */}
+          <div className="form-group-modern">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              placeholder="exemplo@email.com"
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
             />
           </div>
 
