@@ -24,7 +24,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
       setFormData({
         name: contact.name,
         type: contact.type,
-        phone: contact.phone || '',
+        phone: contact.email || '', // Temporariamente usando email como phone até migração
         recurringActive: contact.recurring_charge?.isActive || false,
         recurringAmount: contact.recurring_charge?.amount?.toString() || '',
         recurringLaunchDay: contact.recurring_charge?.launchDay?.toString() || '1',
@@ -72,7 +72,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
       user_id: '', // Será preenchido pelo componente pai
       name: formData.name,
       type: formData.type,
-      phone: formData.phone || undefined,
+      email: formData.phone || undefined, // Temporariamente salvando phone no campo email
       recurring_charge: formData.recurringActive ? {
         isActive: true,
         amount: parseFloat(formData.recurringAmount),
@@ -86,134 +86,131 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-content contact-modal">
+      <div className="modal-content">
         <div className="modal-header">
-          <h3>{contact ? 'Editar Contato' : 'Cadastro de Cliente'}</h3>
+          <h3>{contact ? 'Editar Contato' : 'Novo Contato'}</h3>
           <button className="close-button" onClick={onClose}>
             <X />
           </button>
         </div>
 
-        <form className="contact-form" onSubmit={handleSubmit}>
-          {/* Tipo de Cliente - Radio Buttons */}
-          <div className="customer-type-section">
-            <div className="radio-group">
-              <label className={`radio-option ${formData.type === 'cliente' ? 'active' : ''}`}>
-                <input
-                  type="radio"
-                  name="customerType"
-                  value="cliente"
-                  checked={formData.type === 'cliente'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, type: 'cliente' }))}
-                />
-                <div className="radio-content">
-                  <User size={18} />
-                  <span>Pessoa Física</span>
-                </div>
-              </label>
-              <label className={`radio-option ${formData.type === 'empresa' ? 'active' : ''}`}>
-                <input
-                  type="radio"
-                  name="customerType"
-                  value="empresa"
-                  checked={formData.type === 'empresa'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, type: 'empresa' }))}
-                />
-                <div className="radio-content">
-                  <Building size={18} />
-                  <span>Pessoa Jurídica</span>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          {/* Nome Completo */}
-          <div className="input-group">
-            <label htmlFor="name">Nome Completo</label>
-            <div className="input-with-buttons">
-              <input
-                id="name"
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder={formData.type === 'empresa' ? 'Ex: Empresa LTDA' : 'Ex: João da Silva'}
-                required
-              />
-              <button type="submit" className="inline-submit-btn">
-                {contact ? 'Alterar' : 'Incluir'}
+        <form className="modal-form" onSubmit={handleSubmit}>
+          <fieldset className="contact-type-fieldset">
+            <legend>Tipo de Contato</legend>
+            <div className="contact-type-selector">
+              <button
+                type="button"
+                className={`contact-type-button ${formData.type === 'empresa' ? 'active' : ''}`}
+                onClick={() => setFormData(prev => ({ ...prev, type: 'empresa' }))}
+              >
+                <Building size={18} />
+                Empresa
+              </button>
+              <button
+                type="button"
+                className={`contact-type-button ${formData.type === 'cliente' ? 'active' : ''}`}
+                onClick={() => setFormData(prev => ({ ...prev, type: 'cliente' }))}
+              >
+                <User size={18} />
+                Cliente
               </button>
             </div>
-          </div>
+          </fieldset>
 
-          {/* Telefone */}
-          <div className="input-group">
-            <label htmlFor="phone">Telefone</label>
+          <div className="form-group">
+            <label htmlFor="name">Nome *</label>
             <input
-              id="phone"
-              type="tel"
-              placeholder="(00) 00000-0000"
-              value={formData.phone}
-              onChange={handlePhoneChange}
-              maxLength={15}
+              id="name"
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              required
             />
           </div>
 
-          {/* Faturamento Recorrente */}
+          <div className="form-group">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <label htmlFor="phone" style={{ flex: '1' }}>Celular</label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button type="submit" className="form-button" style={{ padding: '0.5rem 1rem', margin: '0' }}>
+                  {contact ? 'Alterar' : 'Incluir'}
+                </button>
+              </div>
+            </div>
+            <input
+              id="phone"
+              type="tel"
+              placeholder="DD+Número (ex: 11999999999)"
+              value={formData.phone}
+              onChange={handlePhoneChange}
+              maxLength={13}
+            />
+          </div>
+
           <div className="recurring-section">
-            <div className="checkbox-group">
-              <label className="checkbox-label">
+            <div className="recurring-header">
+              <h4>Cobrança Recorrente</h4>
+              <label className="toggle-switch">
                 <input
                   type="checkbox"
                   checked={formData.recurringActive}
                   onChange={(e) => setFormData(prev => ({ ...prev, recurringActive: e.target.checked }))}
                 />
-                <span className="checkmark"></span>
-                <span className="checkbox-text">Adicionar Faturamento Recorrente</span>
+                <span className="toggle-slider"></span>
               </label>
             </div>
 
-            {/* Seção de Cobrança Recorrente */}
-            <div className={`recurring-details ${formData.recurringActive ? 'visible' : ''}`}>
-              <div className="recurring-grid">
-                <div className="input-group">
-                  <label htmlFor="launchDay">Dia de Lançamento</label>
+            {formData.recurringActive && (
+              <div className="recurring-form">
+                <div className="form-group">
+                  <label htmlFor="recurringAmount">Valor Mensal (R$) *</label>
                   <input
-                    id="launchDay"
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={formData.recurringLaunchDay}
-                    onChange={(e) => setFormData(prev => ({ ...prev, recurringLaunchDay: e.target.value }))}
-                    placeholder="Ex: 5"
-                  />
-                </div>
-                <div className="input-group">
-                  <label htmlFor="dueDay">Dia de Pagamento</label>
-                  <input
-                    id="dueDay"
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={formData.recurringDueDay}
-                    onChange={(e) => setFormData(prev => ({ ...prev, recurringDueDay: e.target.value }))}
-                    placeholder="Ex: 15"
-                  />
-                </div>
-                <div className="input-group amount-group">
-                  <label htmlFor="amount">Valor (R$)</label>
-                  <input
-                    id="amount"
+                    id="recurringAmount"
                     type="number"
                     step="0.01"
                     min="0"
                     value={formData.recurringAmount}
                     onChange={(e) => setFormData(prev => ({ ...prev, recurringAmount: e.target.value }))}
-                    placeholder="Ex: 250,00"
                     required={formData.recurringActive}
                   />
                 </div>
+
+
+                <div className="days-grid">
+                  <div className="form-group">
+                    <label htmlFor="recurringLaunchDay">Dia Lançamento</label>
+                    <select
+                      id="recurringLaunchDay"
+                      value={formData.recurringLaunchDay}
+                      onChange={(e) => setFormData(prev => ({ ...prev, recurringLaunchDay: e.target.value }))}
+                    >
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                        <option key={day} value={day}>{day}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="recurringDueDay">Dia Vencimento</label>
+                    <select
+                      id="recurringDueDay"
+                      value={formData.recurringDueDay}
+                      onChange={(e) => setFormData(prev => ({ ...prev, recurringDueDay: e.target.value }))}
+                    >
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                        <option key={day} value={day}>{day}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+          </div>
+
+          <div className="modal-actions">
+            <button type="submit" className="form-button primary">
+              {contact ? 'Alterar' : 'Incluir'}
+            </button>
           </div>
         </form>
       </div>
