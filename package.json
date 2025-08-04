@@ -1,6 +1,7 @@
 {
   "name": "sistema-financas",
   "version": "1.0.0",
+  "type": "module",
   "description": "Sistema de Gerenciamento de Finanças com Supabase",
   "main": "index.js",
   "scripts": {
