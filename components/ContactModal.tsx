@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Contact } from '../src/lib/supabase'
-import { Building, User, X } from 'lucide-react'
+import { X } from 'lucide-react'
 
 interface ContactModalProps {
   contact: Contact | null
@@ -11,7 +11,7 @@ interface ContactModalProps {
 const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose }) => {
   const [formData, setFormData] = useState({
     name: '',
-    type: 'empresa' as 'empresa' | 'cliente',
+    type: 'cliente' as 'empresa' | 'cliente',
     phone: '',
     recurringActive: false,
     recurringAmount: '',
@@ -24,7 +24,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
       setFormData({
         name: contact.name,
         type: contact.type,
-        phone: contact.email || '', // Temporariamente usando email como phone até migração
+        phone: contact.phone || '',
         recurringActive: contact.recurring_charge?.isActive || false,
         recurringAmount: contact.recurring_charge?.amount?.toString() || '',
         recurringLaunchDay: contact.recurring_charge?.launchDay?.toString() || '1',
@@ -34,10 +34,8 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
   }, [contact])
 
   const formatPhone = (value: string) => {
-    // Remove tudo que não é número
     const numbers = value.replace(/\D/g, '')
     
-    // Aplica a máscara (11) 99999-9999
     if (numbers.length <= 11) {
       return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
         .replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3')
@@ -55,7 +53,6 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Validar campos obrigatórios
     if (!formData.name.trim()) {
       alert('Nome é obrigatório')
       return
@@ -69,10 +66,10 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
     }
     
     const contactData: Omit<Contact, 'id' | 'created_at'> = {
-      user_id: '', // Será preenchido pelo componente pai
+      user_id: '',
       name: formData.name,
       type: formData.type,
-      email: formData.phone || undefined, // Temporariamente salvando phone no campo email
+      phone: formData.phone || undefined,
       recurring_charge: formData.recurringActive ? {
         isActive: true,
         amount: parseFloat(formData.recurringAmount),
@@ -86,132 +83,119 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-content">
-        <div className="modal-header">
-          <h3>{contact ? 'Editar Contato' : 'Novo Contato'}</h3>
+      <div className="modal-content modern-modal">
+        <div className="modal-header modern-header">
+          <h3>Cadastro de {contact ? 'Edição de ' : ''}Cliente</h3>
           <button className="close-button" onClick={onClose}>
-            <X />
+            <X size={20} />
           </button>
         </div>
 
-        <form className="modal-form" onSubmit={handleSubmit}>
-          <fieldset className="contact-type-fieldset">
-            <legend>Tipo de Contato</legend>
-            <div className="contact-type-selector">
-              <button
-                type="button"
-                className={`contact-type-button ${formData.type === 'empresa' ? 'active' : ''}`}
-                onClick={() => setFormData(prev => ({ ...prev, type: 'empresa' }))}
-              >
-                <Building size={18} />
-                Empresa
-              </button>
-              <button
-                type="button"
-                className={`contact-type-button ${formData.type === 'cliente' ? 'active' : ''}`}
-                onClick={() => setFormData(prev => ({ ...prev, type: 'cliente' }))}
-              >
-                <User size={18} />
-                Cliente
-              </button>
-            </div>
-          </fieldset>
+        <form className="modern-form" onSubmit={handleSubmit}>
+          {/* Tipo de Contato - Botões Modernos */}
+          <div className="type-selector-modern">
+            <button
+              type="button"
+              className={`type-button-modern ${formData.type === 'cliente' ? 'active' : ''}`}
+              onClick={() => setFormData(prev => ({ ...prev, type: 'cliente' }))}
+            >
+              Pessoa Física
+            </button>
+            <button
+              type="button"
+              className={`type-button-modern ${formData.type === 'empresa' ? 'active' : ''}`}
+              onClick={() => setFormData(prev => ({ ...prev, type: 'empresa' }))}
+            >
+              Pessoa Jurídica
+            </button>
+          </div>
 
-          <div className="form-group">
-            <label htmlFor="name">Nome *</label>
+          {/* Nome Completo */}
+          <div className="form-group-modern">
+            <label htmlFor="name">Nome Completo</label>
             <input
               id="name"
               type="text"
+              placeholder="Ex: João da Silva"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               required
             />
           </div>
 
-          <div className="form-group">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <label htmlFor="phone" style={{ flex: '1' }}>Celular</label>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button type="submit" className="form-button" style={{ padding: '0.5rem 1rem', margin: '0' }}>
-                  {contact ? 'Alterar' : 'Incluir'}
-                </button>
-              </div>
-            </div>
+          {/* Telefone */}
+          <div className="form-group-modern">
+            <label htmlFor="phone">Telefone</label>
             <input
               id="phone"
               type="tel"
-              placeholder="DD+Número (ex: 11999999999)"
+              placeholder="(00) 00000-0000"
               value={formData.phone}
               onChange={handlePhoneChange}
-              maxLength={13}
+              maxLength={15}
             />
           </div>
 
-          <div className="recurring-section">
-            <div className="recurring-header">
-              <h4>Cobrança Recorrente</h4>
-              <label className="toggle-switch">
+          {/* Checkbox Faturamento Recorrente */}
+          <div className="checkbox-modern">
+            <input
+              id="recurring"
+              type="checkbox"
+              checked={formData.recurringActive}
+              onChange={(e) => setFormData(prev => ({ ...prev, recurringActive: e.target.checked }))}
+            />
+            <label htmlFor="recurring">Adicionar Faturamento Recorrente</label>
+          </div>
+
+          {/* Seção Recorrente */}
+          {formData.recurringActive && (
+            <div className="recurring-section-modern">
+              <div className="form-group-modern">
+                <label htmlFor="recurringLaunchDay">Dia de Lançamento</label>
                 <input
-                  type="checkbox"
-                  checked={formData.recurringActive}
-                  onChange={(e) => setFormData(prev => ({ ...prev, recurringActive: e.target.checked }))}
+                  id="recurringLaunchDay"
+                  type="number"
+                  min="1"
+                  max="31"
+                  placeholder="Ex: 5"
+                  value={formData.recurringLaunchDay}
+                  onChange={(e) => setFormData(prev => ({ ...prev, recurringLaunchDay: e.target.value }))}
                 />
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-
-            {formData.recurringActive && (
-              <div className="recurring-form">
-                <div className="form-group">
-                  <label htmlFor="recurringAmount">Valor Mensal (R$) *</label>
-                  <input
-                    id="recurringAmount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.recurringAmount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, recurringAmount: e.target.value }))}
-                    required={formData.recurringActive}
-                  />
-                </div>
-
-
-                <div className="days-grid">
-                  <div className="form-group">
-                    <label htmlFor="recurringLaunchDay">Dia Lançamento</label>
-                    <select
-                      id="recurringLaunchDay"
-                      value={formData.recurringLaunchDay}
-                      onChange={(e) => setFormData(prev => ({ ...prev, recurringLaunchDay: e.target.value }))}
-                    >
-                      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                        <option key={day} value={day}>{day}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="recurringDueDay">Dia Vencimento</label>
-                    <select
-                      id="recurringDueDay"
-                      value={formData.recurringDueDay}
-                      onChange={(e) => setFormData(prev => ({ ...prev, recurringDueDay: e.target.value }))}
-                    >
-                      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                        <option key={day} value={day}>{day}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
               </div>
-            )}
-          </div>
 
-          <div className="modal-actions">
-            <button type="submit" className="form-button primary">
-              {contact ? 'Alterar' : 'Incluir'}
-            </button>
-          </div>
+              <div className="form-group-modern">
+                <label htmlFor="recurringDueDay">Dia de Pagamento</label>
+                <input
+                  id="recurringDueDay"
+                  type="number"
+                  min="1"
+                  max="31"
+                  placeholder="Ex: 15"
+                  value={formData.recurringDueDay}
+                  onChange={(e) => setFormData(prev => ({ ...prev, recurringDueDay: e.target.value }))}
+                />
+              </div>
+
+              <div className="form-group-modern">
+                <label htmlFor="recurringAmount">Valor (R$)</label>
+                <input
+                  id="recurringAmount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="Ex: 250,00"
+                  value={formData.recurringAmount}
+                  onChange={(e) => setFormData(prev => ({ ...prev, recurringAmount: e.target.value }))}
+                  required={formData.recurringActive}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Botão de Submit */}
+          <button type="submit" className="submit-button-modern">
+            Cadastrar Cliente
+          </button>
         </form>
       </div>
     </div>
