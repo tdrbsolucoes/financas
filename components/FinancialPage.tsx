@@ -1,9 +1,27 @@
 import React, { useState, useEffect } from 'react'
 import { User } from '@supabase/supabase-js'
 import { transactionsService, contactsService, Transaction, Contact } from '../src/lib/supabase'
-import { Plus, Edit, Trash2, Settings, Check, X, Filter } from 'lucide-react'
+import { Plus, Edit, Trash2, Settings, Check, X, Filter, Eye, EyeOff } from 'lucide-react'
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  flexRender,
+  createColumnHelper,
+  type ColumnDef,
+  type SortingState,
+  type ColumnFiltersState,
+  type VisibilityState,
+} from '@tanstack/react-table'
+import { Button } from '../src/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../src/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../src/components/ui/table'
+import { Badge } from '../src/components/ui/badge'
+import { Input } from '../src/components/ui/input'
 import TransactionModal from './TransactionModal'
 import ConfirmationModal from './ConfirmationModal'
+import { cn } from '../src/lib/utils'
 
 interface FinancialPageProps {
   user: User
@@ -22,16 +40,10 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
   const [showColumnSelector, setShowColumnSelector] = useState(false)
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
   const [showPaidTransactions, setShowPaidTransactions] = useState(false)
-  const [visibleColumns, setVisibleColumns] = useState({
-    description: true,
-    amount: true,
-    date: true,
-    dueDate: true,
-    type: true,
-    status: true,
-    contact: true,
-    actions: true
-  })
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [globalFilter, setGlobalFilter] = useState('')
 
   useEffect(() => {
     loadData()
@@ -189,6 +201,118 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
     }
   }
 
+  const columnHelper = createColumnHelper<Transaction>()
+
+  const columns = React.useMemo<ColumnDef<Transaction>[]>(
+    () => [
+      columnHelper.accessor('description', {
+        header: 'Descrição',
+        cell: ({ getValue }) => (
+          <div className="font-medium">
+            {getValue()}
+          </div>
+        ),
+      }),
+      columnHelper.accessor('amount', {
+        header: 'Valor',
+        cell: ({ getValue, row }) => (
+          <div className={cn(
+            "font-semibold",
+            row.original.type === 'income' ? 'text-green-600' : 'text-red-600'
+          )}>
+            {formatCurrency(Number(getValue()))}
+          </div>
+        ),
+      }),
+      columnHelper.accessor('date', {
+        header: 'Data',
+        cell: ({ getValue }) => formatDate(getValue()),
+      }),
+      columnHelper.accessor('due_date', {
+        header: 'Vencimento',
+        cell: ({ getValue }) => formatDate(getValue()),
+      }),
+      columnHelper.accessor('type', {
+        header: 'Tipo',
+        cell: ({ getValue }) => (
+          <Badge variant={getValue() === 'income' ? 'success' : 'destructive'}>
+            {getValue() === 'income' ? 'Receita' : 'Despesa'}
+          </Badge>
+        ),
+      }),
+      columnHelper.display({
+        id: 'status',
+        header: 'Status',
+        cell: ({ row }) => getStatusBadge(row.original),
+      }),
+      columnHelper.accessor('contact', {
+        header: 'Contato',
+        cell: ({ getValue }) => getValue()?.name || 'Sem contato',
+      }),
+      columnHelper.display({
+        id: 'actions',
+        header: 'Ações',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleTogglePaid(row.original)}
+              className={cn(
+                "h-8 w-8",
+                row.original.is_paid ? "text-red-600 hover:text-red-700" : "text-green-600 hover:text-green-700"
+              )}
+            >
+              {row.original.is_paid ? <X size={16} /> : <Check size={16} />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setEditingTransaction(row.original)
+                setShowModal(true)
+              }}
+              className="h-8 w-8"
+            >
+              <Edit size={16} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setTransactionToDelete(row.original)
+                setShowDeleteModal(true)
+              }}
+              className="h-8 w-8 text-red-600 hover:text-red-700"
+            >
+              <Trash2 size={16} />
+            </Button>
+          </div>
+        ),
+      }),
+    ],
+    []
+  )
+
+  const table = useReactTable({
+    data: filteredTransactions,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: 'includesString',
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      globalFilter,
+    },
+  })
+
   const filteredTransactions = transactions.filter(transaction => {
     if (filter === 'all') return true
     const typeMatch = transaction.type === filter
@@ -209,7 +333,7 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
 
   const getStatusBadge = (transaction: Transaction) => {
     if (transaction.is_paid) {
-      return <span className="status-badge status-paid">Pago</span>
+      return <Badge variant="success">Pago</Badge>
     }
     
     const dueDate = new Date(transaction.due_date)
@@ -218,10 +342,10 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
     dueDate.setHours(0, 0, 0, 0)
     
     if (dueDate < today) {
-      return <span className="status-badge status-overdue">Vencido</span>
+      return <Badge variant="destructive">Vencido</Badge>
     }
     
-    return <span className="status-badge status-open">Em Aberto</span>
+    return <Badge variant="outline">Em Aberto</Badge>
   }
 
   if (loading) {
@@ -233,18 +357,212 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       {error && (
-        <div className="error-message">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
           {error}
         </div>
       )}
 
-      <div className="page-header">
-        <div className="filter-container">
-          <div className="filter-dropdown-container">
-            <button
-              className="filter-dropdown-button"
+      {/* Filtros e Controles */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtros e Configurações</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4">
+            {/* Busca Global */}
+            <div className="flex items-center gap-4">
+              <Input
+                placeholder="Buscar transações..."
+                value={globalFilter ?? ''}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
+            
+            {/* Filtros por Tipo */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant={filter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setFilter('all')
+                  setShowPaidTransactions(false)
+                }}
+              >
+                Todas
+              </Button>
+              <Button
+                variant={filter === 'income' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilter('income')}
+              >
+                Receitas
+              </Button>
+              <Button
+                variant={filter === 'expense' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilter('expense')}
+              >
+                Despesas
+              </Button>
+              
+              {(filter === 'income' || filter === 'expense') && (
+                <Button
+                  variant={showPaidTransactions ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setShowPaidTransactions(!showPaidTransactions)}
+                >
+                  {showPaidTransactions ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPaidTransactions ? 'Ocultar Pagas' : 'Ver Pagas'}
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Configuração de Colunas */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Configuração de Colunas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {table.getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => (
+                <div key={column.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={column.getIsVisible()}
+                    onChange={(e) => column.toggleVisibility(e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  <label className="text-sm font-medium">
+                    {typeof column.columnDef.header === 'string' 
+                      ? column.columnDef.header 
+                      : column.id}
+                  </label>
+                </div>
+              ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tabela de Transações */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Transações Financeiras</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {filteredTransactions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>
+                {filter === 'all' 
+                  ? 'Nenhuma transação encontrada. Clique no botão + para adicionar a primeira!'
+                  : `Nenhuma ${filter === 'income' ? 'receita' : 'despesa'} encontrada.`
+                }
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && "selected"}
+                        className={cn(
+                          row.original.is_paid && "opacity-60"
+                        )}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center"
+                      >
+                        Nenhum resultado encontrado.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Botão Flutuante */}
+      <Button
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
+        size="icon"
+        onClick={() => {
+          setEditingTransaction(null)
+          setShowModal(true)
+        }}
+      >
+        <Plus size={24} />
+      </Button>
+
+      {/* Modais */}
+      {showModal && (
+        <TransactionModal
+          transaction={editingTransaction}
+          contacts={contacts}
+          onSave={handleSaveTransaction}
+          onClose={() => {
+            setShowModal(false)
+            setEditingTransaction(null)
+          }}
+        />
+      )}
+
+      {showDeleteModal && transactionToDelete && (
+        <ConfirmationModal
+          title="Excluir Transação"
+          message={`Tem certeza que deseja excluir "${transactionToDelete.description}"? Esta ação não pode ser desfeita.`}
+          onConfirm={handleDeleteTransaction}
+          onCancel={() => {
+            setShowDeleteModal(false)
+            setTransactionToDelete(null)
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+export default FinancialPage
               onClick={() => setShowFilterDropdown(!showFilterDropdown)}
             >
               <Filter size={16} />

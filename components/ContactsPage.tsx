@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { User } from '@supabase/supabase-js'
 import { contactsService, Contact } from '../src/lib/supabase'
-import { Plus, Edit, Trash2, Building, User as UserIcon, RefreshCw } from 'lucide-react'
+import { Plus, Edit, Trash2, Building, User as UserIcon, RefreshCw, Filter } from 'lucide-react'
+import { Button } from '../src/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../src/components/ui/card'
+import { Badge } from '../src/components/ui/badge'
+import { Input } from '../src/components/ui/input'
 import ContactModal from './ContactModal'
 import ConfirmationModal from './ConfirmationModal'
+import { cn } from '../src/lib/utils'
 
 interface ContactsPageProps {
   user: User
@@ -18,6 +23,7 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
   const [editingContact, setEditingContact] = useState<Contact | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [contactToDelete, setContactToDelete] = useState<Contact | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     loadContacts()
@@ -84,8 +90,11 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
   }
 
   const filteredContacts = contacts.filter(contact => {
-    if (filter === 'all') return true
-    return contact.type === filter
+    const typeMatch = filter === 'all' || contact.type === filter
+    const searchMatch = searchTerm === '' || 
+      contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (contact.phone && contact.phone.includes(searchTerm))
+    return typeMatch && searchMatch
   })
 
   const formatCurrency = (value: number) => {
@@ -104,102 +113,160 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       {error && (
-        <div className="error-message">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
           {error}
         </div>
       )}
 
-      <div className="page-header">        
-        <div className="filter-buttons">
-          <button
-            className={filter === 'all' ? 'active' : ''}
-            onClick={() => setFilter('all')}
-          >
-            Todos
-          </button>
-          <button
-            className={filter === 'empresa' ? 'active' : ''}
-            onClick={() => setFilter('empresa')}
-          >
-            Empresas
-          </button>
-          <button
-            className={filter === 'cliente' ? 'active' : ''}
-            onClick={() => setFilter('cliente')}
-          >
-            Clientes
-          </button>
-        </div>
-      </div>
+      {/* Filtros e Busca */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter size={20} />
+            Filtros e Busca
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4">
+            {/* Busca */}
+            <Input
+              placeholder="Buscar por nome ou telefone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-sm"
+            />
+            
+            {/* Filtros por Tipo */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant={filter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilter('all')}
+              >
+                Todos
+              </Button>
+              <Button
+                variant={filter === 'empresa' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilter('empresa')}
+              >
+                <Building size={16} className="mr-1" />
+                Empresas
+              </Button>
+              <Button
+                variant={filter === 'cliente' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilter('cliente')}
+              >
+                <UserIcon size={16} className="mr-1" />
+                Clientes
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="card">
+      {/* Lista de Contatos */}
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Contatos ({filteredContacts.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
         {filteredContacts.length === 0 ? (
-          <div className="empty-state">
+          <div className="text-center py-8 text-muted-foreground">
             <p>
-              {filter === 'all' 
-                ? 'Nenhum contato cadastrado. Clique no botão + para adicionar o primeiro!'
-                : `Nenhum ${filter} cadastrado.`
+              {searchTerm 
+                ? 'Nenhum contato encontrado com os critérios de busca.'
+                : filter === 'all' 
+                  ? 'Nenhum contato cadastrado. Clique no botão + para adicionar o primeiro!'
+                  : `Nenhum ${filter} cadastrado.`
               }
             </p>
           </div>
         ) : (
-          <div className="data-list">
+          <div className="grid gap-4">
             {filteredContacts.map((contact) => (
-              <div key={contact.id} className="data-item">
-                <div className="item-content">
-                  <h4>
-                    {contact.type === 'empresa' ? <Building size={16} /> : <UserIcon size={16} />}
-                    {contact.name}
-                  </h4>
-                  <p>
-                    {contact.type === 'empresa' ? 'Empresa' : 'Cliente'}
-                    {contact.phone && ` • ${contact.phone}`}
-                  </p>
+              <Card key={contact.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        {contact.type === 'empresa' ? 
+                          <Building size={18} className="text-blue-600" /> : 
+                          <UserIcon size={18} className="text-green-600" />
+                        }
+                        <h3 className="font-semibold text-lg">{contact.name}</h3>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant={contact.type === 'empresa' ? 'default' : 'secondary'}>
+                          {contact.type === 'empresa' ? 'Empresa' : 'Cliente'}
+                        </Badge>
+                        {contact.phone && (
+                          <span className="text-sm text-muted-foreground">
+                            {contact.phone}
+                          </span>
+                        )}
+                      </div>
+                      
                   {contact.recurring_charge?.isActive && (
-                    <div className="recurring-tag">
-                      <RefreshCw size={14} />
-                      {formatCurrency(contact.recurring_charge.amount)}
-                    </div>
+                        <Badge variant="outline" className="text-green-600 border-green-200">
+                          <RefreshCw size={12} className="mr-1" />
+                          {formatCurrency(contact.recurring_charge.amount)}
+                        </Badge>
                   )}
-                </div>
-                <div className="item-actions">
-                  <button
-                    className="action-button"
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
                     onClick={() => {
                       setEditingContact(contact)
                       setShowModal(true)
                     }}
+                        className="h-8 w-8"
                   >
-                    <Edit size={18} />
-                  </button>
-                  <button
-                    className="action-button"
+                        <Edit size={16} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                     onClick={() => {
                       setContactToDelete(contact)
                       setShowDeleteModal(true)
                     }}
+                        className="h-8 w-8 text-red-600 hover:text-red-700"
                   >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
-      </div>
+        </CardContent>
+      </Card>
 
-      <button
-        className="fab"
+      {/* Botão Flutuante */}
+      <Button
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
+        size="icon"
         onClick={() => {
           setEditingContact(null)
           setShowModal(true)
         }}
       >
-        <Plus />
-      </button>
+        <Plus size={24} />
+      </Button>
 
+      {/* Modais */}
       {showModal && (
         <ContactModal
           contact={editingContact}
