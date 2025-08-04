@@ -44,6 +44,16 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [globalFilter, setGlobalFilter] = useState('')
+  const [visibleColumns, setVisibleColumns] = useState({
+    description: true,
+    amount: true,
+    date: true,
+    dueDate: true,
+    type: true,
+    status: true,
+    contact: true,
+    actions: true
+  })
 
   useEffect(() => {
     loadData()
@@ -294,6 +304,13 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
     []
   )
 
+  const filteredTransactions = transactions.filter(transaction => {
+    if (filter === 'all') return true
+    const typeMatch = transaction.type === filter
+    const paidMatch = showPaidTransactions ? true : !transaction.is_paid
+    return typeMatch && paidMatch
+  })
+
   const table = useReactTable({
     data: filteredTransactions,
     columns,
@@ -311,13 +328,6 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
       columnVisibility,
       globalFilter,
     },
-  })
-
-  const filteredTransactions = transactions.filter(transaction => {
-    if (filter === 'all') return true
-    const typeMatch = transaction.type === filter
-    const paidMatch = showPaidTransactions ? true : !transaction.is_paid
-    return typeMatch && paidMatch
   })
 
   const formatCurrency = (value: number) => {
@@ -558,11 +568,12 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
           }}
         />
       )}
-    </div>
-  )
-}
 
-export default FinancialPage
+      <div className="controls-container">
+        <div className="filter-container">
+          <div className="filter-dropdown-container">
+            <button
+              className="filter-button"
               onClick={() => setShowFilterDropdown(!showFilterDropdown)}
             >
               <Filter size={16} />
