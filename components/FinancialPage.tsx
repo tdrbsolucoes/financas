@@ -343,19 +343,13 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
                   className={`transaction-row ${transaction.is_paid ? 'paid' : ''}`}
                 >
                   <td>
-                    <input
-                      <button
-                        className="action-button pay-button"
-                        onClick={() => handleTogglePaid(transaction)}
-                        title={transaction.is_paid ? 'Marcar como não pago' : 'Marcar como pago'}
-                      >
-                        {transaction.is_paid ? <X size={18} /> : <Check size={18} />}
-                      </button>
-                      type="checkbox"
-                      className="status-checkbox"
-                      checked={transaction.is_paid}
-                      onChange={() => handleTogglePaid(transaction)}
-                    />
+                    <button
+                      className="action-button pay-button"
+                      onClick={() => handleTogglePaid(transaction)}
+                      title={transaction.is_paid ? 'Marcar como não pago' : 'Marcar como pago'}
+                    >
+                      {transaction.is_paid ? <X size={18} /> : <Check size={18} />}
+                    </button>
                   </td>
                   {visibleColumns.description && (
                     <td>{transaction.description}</td>
