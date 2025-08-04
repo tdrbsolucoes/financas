@@ -72,88 +72,6 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
     }
   }
 
-  const handleSaveTransaction = async (transactionData: Omit<Transaction, 'id' | 'created_at'>) => {
-    try {
-      if (editingTransaction) {
-        const { data, error } = await transactionsService.updateTransaction(editingTransaction.id, transactionData)
-        if (error) throw error
-        
-        // Recarregar transações para manter sincronia
-        await reloadTransactions()
-      } else {
-        const { data, error } = await transactionsService.createTransaction({
-          ...transactionData,
-          user_id: user.id
-        })
-        if (error) throw error
-        
-        // Recarregar transações para manter sincronia
-        await reloadTransactions()
-      }
-      
-      setShowModal(false)
-      setEditingTransaction(null)
-    } catch (error: any) {
-      setError(error.message)
-    }
-  }
-
-  const handleDeleteTransaction = async () => {
-    if (!transactionToDelete) return
-
-    try {
-      const { error } = await transactionsService.deleteTransaction(transactionToDelete.id)
-      if (error) throw error
-      
-      // Recarregar transações para manter sincronia
-      await reloadTransactions()
-      setShowDeleteModal(false)
-      setTransactionToDelete(null)
-    } catch (error: any) {
-      setError(error.message)
-    }
-  }
-
-  const handleTogglePaid = async (transaction: Transaction) => {
-    try {
-      if (transaction.is_paid) {
-        // Marcar como não pago
-        const { data, error } = await transactionsService.updateTransaction(transaction.id, {
-          is_paid: false,
-          paid_date: undefined
-        })
-        if (error) throw error
-      } else {
-        // Marcar como pago
-        const { data, error } = await transactionsService.markAsPaid(transaction.id, new Date().toISOString().split('T')[0])
-        if (error) throw error
-      }
-      
-      // Recarregar transações para manter sincronia
-      await reloadTransactions()
-    } catch (error: any) {
-      setError(error.message)
-    }
-  }
-        transactionsService.getTransactions(user.id),
-        contactsService.getContacts(user.id)
-      ])
-      
-      if (transactionsResult.error) throw transactionsResult.error
-      if (contactsResult.error) throw contactsResult.error
-      
-      setTransactions(transactionsResult.data || [])
-      setContacts(contactsResult.data || [])
-      
-      // Gerar transações recorrentes se necessário
-      await generateRecurringTransactions(contactsResult.data || [])
-    } catch (error: any) {
-      setError(error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const generateRecurringTransactions = async (contacts: Contact[]) => {
     const now = new Date()
     const currentMonth = now.getMonth()
@@ -213,7 +131,8 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
         const { data, error } = await transactionsService.updateTransaction(editingTransaction.id, transactionData)
         if (error) throw error
         
-        setTransactions(prev => prev.map(t => t.id === editingTransaction.id ? data : t))
+        // Recarregar transações para manter sincronia
+        await reloadTransactions()
       } else {
         const { data, error } = await transactionsService.createTransaction({
           ...transactionData,
@@ -221,7 +140,8 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
         })
         if (error) throw error
         
-        setTransactions(prev => [data, ...prev])
+        // Recarregar transações para manter sincronia
+        await reloadTransactions()
       }
       
       setShowModal(false)
@@ -238,7 +158,8 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
       const { error } = await transactionsService.deleteTransaction(transactionToDelete.id)
       if (error) throw error
       
-      setTransactions(prev => prev.filter(t => t.id !== transactionToDelete.id))
+      // Recarregar transações para manter sincronia
+      await reloadTransactions()
       setShowDeleteModal(false)
       setTransactionToDelete(null)
     } catch (error: any) {
@@ -255,13 +176,14 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
           paid_date: undefined
         })
         if (error) throw error
-        setTransactions(prev => prev.map(t => t.id === transaction.id ? data : t))
       } else {
         // Marcar como pago
         const { data, error } = await transactionsService.markAsPaid(transaction.id, new Date().toISOString().split('T')[0])
         if (error) throw error
-        setTransactions(prev => prev.map(t => t.id === transaction.id ? data : t))
       }
+      
+      // Recarregar transações para manter sincronia
+      await reloadTransactions()
     } catch (error: any) {
       setError(error.message)
     }
