@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estrutura do Formulário de Cliente</title>
+</head>
+<body>
+
+    <div class="form-container">
+        <header>
+            <h1>Cadastro de Cliente</h1>
+        </header>
+        <form>
+            <div class="radio-group">
+                <label>
+                    <input type="radio" name="customerType" value="pessoa" checked>
+                    <span>Pessoa Física</span>
+                </label>
+                <label>
+                    <input type="radio" name="customerType" value="empresa">
+                    <span>Pessoa Jurídica</span>
+                </label>
+            </div>
+
+            <div class="input-group">
+                <label for="name">Nome Completo</label>
+                <input type="text" id="name" placeholder="Ex: João da Silva" required>
+            </div>
+
+            <div class="input-group">
+                <label for="phone">Telefone</label>
+                <input type="tel" id="phone" placeholder="(00) 00000-0000" required>
+            </div>
+
+            <div>
+                <div class="checkbox-group">
+                    <label for="recurring">
+                        <input type="checkbox" id="recurring">
+                        <span>Adicionar Faturamento Recorrente</span>
+                    </label>
+                </div>
+                
+                <!-- A classe 'visible' seria adicionada dinamicamente para mostrar esta seção -->
+                <div class="recurring-section">
+                   <div class="input-group">
+                      <label for="launchDay">Dia de Lançamento</label>
+                      <input type="number" id="launchDay" min="1" max="31" placeholder="Ex: 5">
+                   </div>
+                   <div class="input-group">
+                      <label for="paymentDay">Dia de Pagamento</label>
+                      <input type="number" id="paymentDay" min="1" max="31" placeholder="Ex: 15">
+                   </div>
+                   <div class="input-group">
+                      <label for="amount">Valor (R$)</label>
+                      <input type="number" id="amount" step="0.01" min="0" placeholder="Ex: 250,00">
+                   </div>
+                </div>
+            </div>
+
+            <button type="submit">
+              Cadastrar Cliente
+            </button>
+        </form>
+    </div>
+
+</body>
+</html>
