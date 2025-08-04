@@ -38,13 +38,13 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, '')
     
-    if (numbers.length <= 10) {
+    if (numbers.length <= 11) {
       if (numbers.length <= 2) {
         return `(${numbers}`
-      } else if (numbers.length <= 6) {
+      } else if (numbers.length <= 7) {
         return `(${numbers.substr(0, 2)}) ${numbers.substr(2)}`
       } else {
-        return `(${numbers.substr(0, 2)}) ${numbers.substr(2, 4)}-${numbers.substr(6)}`
+        return `(${numbers.substr(0, 2)}) ${numbers.substr(2, 5)}-${numbers.substr(7)}`
       }
     }
     return value
@@ -138,7 +138,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
               placeholder="(00) 00000-0000"
               value={formData.phone}
               onChange={handlePhoneChange}
-              maxLength={14}
+              maxLength={15}
             />
           </div>
 
