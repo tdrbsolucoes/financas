@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { User } from '@supabase/supabase-js'
 import { transactionsService, contactsService, Transaction, Contact } from '../src/lib/supabase'
-import { Plus, Edit, Trash2, Settings, Check, X } from 'lucide-react'
+import { Plus, Edit, Trash2, Settings, Check, X, Filter } from 'lucide-react'
 import TransactionModal from './TransactionModal'
 import ConfirmationModal from './ConfirmationModal'
 
@@ -247,6 +247,7 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
               className="filter-dropdown-button"
               onClick={() => setShowFilterDropdown(!showFilterDropdown)}
             >
+              <Filter size={16} />
               Filtrar
             </button>
             
@@ -300,6 +301,7 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
             onClick={() => setShowColumnSelector(!showColumnSelector)}
           >
             <Settings size={16} />
+            Colunas
           </button>
 
           {showColumnSelector && (
@@ -326,7 +328,33 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
         </div>
       </div>
 
-      <div className="table-container">
+      {/* Grid de Colunas Configurável */}
+      <div className="card" style={{ marginBottom: '1rem' }}>
+        <h3>Configuração de Colunas</h3>
+        <div className="column-grid">
+          {Object.entries(visibleColumns).map(([key, visible]) => (
+            <div
+              key={key}
+              className={`column-item ${visible ? 'active' : ''}`}
+              onClick={() => setVisibleColumns(prev => ({ ...prev, [key]: !visible }))}
+            >
+              <input type="checkbox" checked={visible} readOnly />
+              <span>
+                {key === 'description' && 'Descrição'}
+                {key === 'amount' && 'Valor'}
+                {key === 'date' && 'Data'}
+                {key === 'dueDate' && 'Vencimento'}
+                {key === 'type' && 'Tipo'}
+                {key === 'status' && 'Status'}
+                {key === 'contact' && 'Contato'}
+                {key === 'actions' && 'Ações'}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="transactions-container">
         {filteredTransactions.length === 0 ? (
           <div className="empty-state">
             <p>
@@ -337,66 +365,95 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
             </p>
           </div>
         ) : (
-          <div className="transactions-grid">
+          <div className="transactions-list">
             {filteredTransactions.map((transaction) => (
               <div 
                 key={transaction.id} 
-                className={`transaction-card ${transaction.is_paid ? 'paid' : ''}`}
+                className={`transaction-row ${transaction.is_paid ? 'paid' : ''}`}
               >
-                <div className="transaction-header">
-                  <div className="transaction-info">
-                    <h4 className="transaction-description">{transaction.description}</h4>
-                    <div className="transaction-meta">
-                      <span className="transaction-contact">
-                        {transaction.contact?.name || 'Sem contato'}
-                      </span>
-                      <span className="transaction-type">
-                        {transaction.type === 'income' ? 'Receita' : 'Despesa'}
-                      </span>
-                    </div>
+                {visibleColumns.description && (
+                  <div className="transaction-field">
+                    <label>Descrição:</label>
+                    <span>{transaction.description}</span>
                   </div>
-                  <div className="transaction-amount">
+                )}
+                
+                {visibleColumns.amount && (
+                  <div className="transaction-field">
+                    <label>Valor:</label>
                     <span className={`amount ${transaction.type}`}>
                       {formatCurrency(Number(transaction.amount))}
                     </span>
                   </div>
-                </div>
+                )}
                 
-                <div className="transaction-footer">
-                  <div className="transaction-dates">
-                    <span>Data: {formatDate(transaction.date)}</span>
-                    <span>Venc: {formatDate(transaction.due_date)}</span>
+                {visibleColumns.date && (
+                  <div className="transaction-field">
+                    <label>Data:</label>
+                    <span>{formatDate(transaction.date)}</span>
+                  </div>
+                )}
+                
+                {visibleColumns.dueDate && (
+                  <div className="transaction-field">
+                    <label>Vencimento:</label>
+                    <span>{formatDate(transaction.due_date)}</span>
+                  </div>
+                )}
+                
+                {visibleColumns.type && (
+                  <div className="transaction-field">
+                    <label>Tipo:</label>
+                    <span>{transaction.type === 'income' ? 'Receita' : 'Despesa'}</span>
+                  </div>
+                )}
+                
+                {visibleColumns.status && (
+                  <div className="transaction-field">
+                    <label>Status:</label>
                     {getStatusBadge(transaction)}
                   </div>
-                  
-                  <div className="transaction-actions">
-                    <button
-                      className="action-button pay-button"
-                      onClick={() => handleTogglePaid(transaction)}
-                      title={transaction.is_paid ? 'Marcar como não pago' : 'Marcar como pago'}
-                    >
-                      {transaction.is_paid ? <X size={16} /> : <Check size={16} />}
-                    </button>
-                    <button
-                      className="action-button"
-                      onClick={() => {
-                        setEditingTransaction(transaction)
-                        setShowModal(true)
-                      }}
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button
-                      className="action-button"
-                      onClick={() => {
-                        setTransactionToDelete(transaction)
-                        setShowDeleteModal(true)
-                      }}
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                )}
+                
+                {visibleColumns.contact && (
+                  <div className="transaction-field">
+                    <label>Contato:</label>
+                    <span>{transaction.contact?.name || 'Sem contato'}</span>
                   </div>
-                </div>
+                )}
+                
+                {visibleColumns.actions && (
+                  <div className="transaction-field">
+                    <label>Ações:</label>
+                    <div className="transaction-actions">
+                      <button
+                        className="action-button pay-button"
+                        onClick={() => handleTogglePaid(transaction)}
+                        title={transaction.is_paid ? 'Marcar como não pago' : 'Marcar como pago'}
+                      >
+                        {transaction.is_paid ? <X size={16} /> : <Check size={16} />}
+                      </button>
+                      <button
+                        className="action-button"
+                        onClick={() => {
+                          setEditingTransaction(transaction)
+                          setShowModal(true)
+                        }}
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        className="action-button"
+                        onClick={() => {
+                          setTransactionToDelete(transaction)
+                          setShowDeleteModal(true)
+                        }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
