@@ -20,6 +20,8 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null)
   const [showColumnSelector, setShowColumnSelector] = useState(false)
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false)
+  const [showPaidTransactions, setShowPaidTransactions] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState({
     description: true,
     amount: true,
@@ -168,7 +170,9 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
 
   const filteredTransactions = transactions.filter(transaction => {
     if (filter === 'all') return true
-    return transaction.type === filter
+    const typeMatch = transaction.type === filter
+    const paidMatch = showPaidTransactions ? true : !transaction.is_paid
+    return typeMatch && paidMatch
   })
 
   const formatCurrency = (value: number) => {
@@ -216,25 +220,57 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
       )}
 
       <div className="page-header">
-        <div className="filter-buttons">
-          <button
-            className={filter === 'all' ? 'active' : ''}
-            onClick={() => setFilter('all')}
-          >
-            Todas
-          </button>
-          <button
-            className={filter === 'income' ? 'active' : ''}
-            onClick={() => setFilter('income')}
-          >
-            Receitas
-          </button>
-          <button
-            className={filter === 'expense' ? 'active' : ''}
-            onClick={() => setFilter('expense')}
-          >
-            Despesas
-          </button>
+        <div className="filter-container">
+          <div className="filter-dropdown-container">
+            <button
+              className="filter-dropdown-button"
+              onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+            >
+              Filtrar
+            </button>
+            
+            {showFilterDropdown && (
+              <div className="filter-dropdown">
+                <button
+                  className={filter === 'all' ? 'active' : ''}
+                  onClick={() => {
+                    setFilter('all')
+                    setShowFilterDropdown(false)
+                    setShowPaidTransactions(false)
+                  }}
+                >
+                  Todas
+                </button>
+                <button
+                  className={filter === 'income' ? 'active' : ''}
+                  onClick={() => {
+                    setFilter('income')
+                    setShowFilterDropdown(false)
+                  }}
+                >
+                  Receitas
+                </button>
+                <button
+                  className={filter === 'expense' ? 'active' : ''}
+                  onClick={() => {
+                    setFilter('expense')
+                    setShowFilterDropdown(false)
+                  }}
+                >
+                  Despesas
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {(filter === 'income' || filter === 'expense') && (
+            <button
+              className={`paid-toggle-button ${showPaidTransactions ? 'active' : ''}`}
+              onClick={() => setShowPaidTransactions(!showPaidTransactions)}
+            >
+              {showPaidTransactions ? 'Ocultar Pagas' : 'Visualizar Contas Pagas'}
+            </button>
+          )}
         </div>
 
         <div className="column-selector-container">
@@ -243,7 +279,6 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
             onClick={() => setShowColumnSelector(!showColumnSelector)}
           >
             <Settings size={16} />
-            Colunas
           </button>
 
           {showColumnSelector && (
@@ -309,6 +344,13 @@ const FinancialPage: React.FC<FinancialPageProps> = ({ user }) => {
                 >
                   <td>
                     <input
+                      <button
+                        className="action-button pay-button"
+                        onClick={() => handleTogglePaid(transaction)}
+                        title={transaction.is_paid ? 'Marcar como não pago' : 'Marcar como pago'}
+                      >
+                        {transaction.is_paid ? <X size={18} /> : <Check size={18} />}
+                      </button>
                       type="checkbox"
                       className="status-checkbox"
                       checked={transaction.is_paid}

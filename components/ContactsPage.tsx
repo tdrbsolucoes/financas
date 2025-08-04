@@ -112,6 +112,18 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
       )}
 
       <div className="page-header">
+        <button
+          className="form-button"
+          onClick={() => {
+            setEditingContact(null)
+            setShowModal(true)
+          }}
+          style={{ marginBottom: '1rem' }}
+        >
+          <Plus size={16} />
+          Criar Contato
+        </button>
+        
         <div className="filter-buttons">
           <button
             className={filter === 'all' ? 'active' : ''}
@@ -155,14 +167,12 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
                   </h4>
                   <p>
                     {contact.type === 'empresa' ? 'Empresa' : 'Cliente'}
-                    {contact.email && ` • ${contact.email}`}
+                    {contact.phone && ` • ${contact.phone}`}
                   </p>
                   {contact.recurring_charge?.isActive && (
                     <div className="recurring-tag">
                       <RefreshCw size={14} />
-                      {formatCurrency(contact.recurring_charge.amount)} • 
-                      Lanç: {contact.recurring_charge.launchDay} • 
-                      Venc: {contact.recurring_charge.dueDay}
+                      {formatCurrency(contact.recurring_charge.amount)}
                     </div>
                   )}
                 </div>
@@ -192,15 +202,6 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
         )}
       </div>
 
-      <button
-        className="fab"
-        onClick={() => {
-          setEditingContact(null)
-          setShowModal(true)
-        }}
-      >
-        <Plus />
-      </button>
 
       {showModal && (
         <ContactModal

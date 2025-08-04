@@ -129,14 +129,21 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
           </div>
 
           <div className="form-group">
-            <label htmlFor="phone">Celular</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <label htmlFor="phone" style={{ flex: '1' }}>Celular</label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button type="submit" className="form-button" style={{ padding: '0.5rem 1rem', margin: '0' }}>
+                  {contact ? 'Alterar' : 'Incluir'}
+                </button>
+              </div>
+            </div>
             <input
               id="phone"
               type="tel"
-              placeholder="(11) 99999-9999"
+              placeholder="DD+Número (ex: 11999999999)"
               value={formData.phone}
               onChange={handlePhoneChange}
-              maxLength={15}
+              maxLength={13}
             />
           </div>
 
@@ -195,9 +202,6 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
             )}
           </div>
 
-          <button type="submit" className="form-button">
-            {contact ? 'Atualizar' : 'Criar'} Contato
-          </button>
         </form>
       </div>
     </div>
