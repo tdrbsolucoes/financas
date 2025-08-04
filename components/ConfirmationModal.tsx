@@ -15,24 +15,24 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   onCancel
 }) => {
   return (
-    <div className="modal-overlay">
-      <div className="modal-content confirmation-modal-content">
-        <div className="modal-header">
-          <h3>{title}</h3>
-          <button className="close-button" onClick={onCancel}>
+    <div className="fixed inset-0 bg-black/70 grid place-items-center z-50 backdrop-blur-sm">
+      <div className="bg-card p-6 rounded-lg max-w-sm shadow-2xl border border-border">
+        <div className="flex justify-between items-center mb-6 border-b border-border pb-4">
+          <h3 className="m-0 text-xl font-semibold">{title}</h3>
+          <button className="bg-transparent border-none text-xl cursor-pointer text-muted-foreground" onClick={onCancel}>
             <X />
           </button>
         </div>
 
-        <div className="modal-body">
-          <p>{message}</p>
+        <div className="mb-6">
+          <p className="text-muted-foreground leading-relaxed">{message}</p>
         </div>
 
-        <div className="confirmation-actions">
-          <button className="form-button cancel-button" onClick={onCancel}>
+        <div className="flex justify-end gap-4">
+          <button className="p-3 border-none rounded-lg bg-muted text-muted-foreground text-base font-semibold cursor-pointer transition-all hover:brightness-90" onClick={onCancel}>
             Cancelar
           </button>
-          <button className="form-button confirm-button" onClick={onConfirm}>
+          <button className="p-3 border-none rounded-lg bg-destructive text-destructive-foreground text-base font-semibold cursor-pointer transition-all hover:brightness-110" onClick={onConfirm}>
             Confirmar
           </button>
         </div>

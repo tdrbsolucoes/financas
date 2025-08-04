@@ -167,13 +167,13 @@ function App() {
 
   if (loading) {
     return (
-      <div className="login-container">
-        <div className="login-box">
-          <div className="logo-container">
-            <div className="logo">F</div>
+      <div className="w-full h-screen grid place-items-center bg-background">
+        <div className="w-full max-w-md p-10 bg-card border border-border rounded-lg shadow-lg">
+          <div className="flex items-center gap-3 mb-6 justify-center">
+            <div className="text-2xl bg-primary text-primary-foreground rounded-lg w-10 h-10 grid place-items-center font-bold">F</div>
             <h1>Finanças</h1>
           </div>
-          <p style={{ textAlign: 'center', color: 'var(--muted-foreground)' }}>
+          <p className="text-center text-muted-foreground">
             Carregando...
           </p>
         </div>
@@ -189,38 +189,22 @@ function App() {
   // Verificar se há erro de banco (tabelas não existem)
   if (showDatabaseError) {
     return (
-      <div className="login-container">
-        <div className="login-box" style={{ maxWidth: '700px' }}>
-          <div className="logo-container">
-            <div className="logo">F</div>
+      <div className="w-full h-screen grid place-items-center bg-background">
+        <div className="w-full max-w-3xl p-10 bg-card border border-border rounded-lg shadow-lg">
+          <div className="flex items-center gap-3 mb-6 justify-center">
+            <div className="text-2xl bg-primary text-primary-foreground rounded-lg w-10 h-10 grid place-items-center font-bold">F</div>
             <h1>Finanças</h1>
           </div>
-          <div className="error-message">
-            <h3>⚠️ Tabelas do banco não encontradas</h3>
+          <div className="bg-destructive/20 text-destructive p-3 rounded-lg mb-4 text-center text-sm">
+            <h3 className="text-lg font-semibold mb-4">⚠️ Tabelas do banco não encontradas</h3>
             <p>Execute este comando na raiz do projeto:</p>
-            <div style={{ 
-              background: 'var(--muted)', 
-              padding: '1rem', 
-              borderRadius: 'var(--radius)', 
-              fontSize: '0.9rem',
-              marginTop: '1rem',
-              fontFamily: 'monospace'
-            }}>
+            <div className="bg-muted p-4 rounded-lg text-sm mt-4 font-mono">
               <code>node setupDatabase.js</code>
             </div>
-            <p style={{ marginTop: '1rem', fontSize: '0.9rem' }}>
+            <p className="mt-4 text-sm">
               Ou execute o SQL manualmente no Supabase Dashboard:
             </p>
-            <div style={{ 
-              background: 'var(--muted)', 
-              padding: '1rem', 
-              borderRadius: 'var(--radius)', 
-              fontSize: '0.8rem',
-              maxHeight: '200px',
-              overflowY: 'auto',
-              marginTop: '1rem',
-              fontFamily: 'monospace'
-            }}>
+            <div className="bg-muted p-4 rounded-lg text-xs max-h-48 overflow-y-auto mt-4 font-mono">
               <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
 {`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -260,9 +244,8 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
               </pre>
             </div>
             <button 
-              className="login-button"
+              className="w-full p-3 border-none rounded-lg bg-primary text-primary-foreground text-base font-semibold cursor-pointer transition-all hover:brightness-110 mt-4"
               onClick={() => window.location.reload()}
-              style={{ marginTop: '1rem' }}
             >
               Verificar Novamente
             </button>
@@ -307,16 +290,16 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
   }
 
   return (
-    <div className="app-container">
+    <div className="flex w-full h-screen overflow-hidden">
       <Sidebar 
         currentPage={currentPage} 
         onPageChange={setCurrentPage}
         onLogout={handleLogout}
       />
       
-      <div className="main-content">
-        <div className="header">
-          <h2>
+      <div className="flex-grow flex flex-col overflow-y-auto bg-background">
+        <div className="p-6 border-b border-border bg-card">
+          <h2 className="text-3xl font-bold">
             {currentPage === 'dashboard' && 'Dashboard'}
             {currentPage === 'contacts' && 'Contatos'}
             {currentPage === 'financial' && 'Financeiro'}
@@ -324,7 +307,7 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
           </h2>
         </div>
         
-        <div className="page-content">
+        <div className="p-10 flex-grow pb-20 md:pb-10">
           {renderCurrentPage()}
         </div>
       </div>

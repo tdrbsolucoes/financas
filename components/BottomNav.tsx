@@ -20,21 +20,25 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentPage, onPageChange }) => {
   ]
 
   return (
-    <nav className="bottom-nav">
-      <ul>
+    <nav className="block fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50 md:hidden">
+      <ul className="list-none flex justify-around py-2">
         {menuItems.map((item) => {
           const Icon = item.icon
           return (
-            <li key={item.id}>
+            <li key={item.id} className="mb-0">
               <a
                 href="#"
-                className={currentPage === item.id ? 'active' : ''}
+                className={`flex flex-col items-center gap-1 p-2 no-underline text-xs rounded-lg ${
+                  currentPage === item.id 
+                    ? 'text-primary bg-transparent' 
+                    : 'text-card-foreground'
+                }`}
                 onClick={(e) => {
                   e.preventDefault()
                   onPageChange(item.id as any)
                 }}
               >
-                <Icon />
+                <Icon className="w-5 h-5" />
                 {item.label}
               </a>
             </li>
