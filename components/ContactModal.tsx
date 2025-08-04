@@ -38,11 +38,14 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, '')
     
-    if (numbers.length <= 11) {
-      return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
-        .replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3')
-        .replace(/(\d{2})(\d{0,5})/, '($1) $2')
-        .replace(/(\d{0,2})/, '($1')
+    if (numbers.length <= 10) {
+      if (numbers.length <= 2) {
+        return `(${numbers}`
+      } else if (numbers.length <= 6) {
+        return `(${numbers.substr(0, 2)}) ${numbers.substr(2)}`
+      } else {
+        return `(${numbers.substr(0, 2)}) ${numbers.substr(2, 4)}-${numbers.substr(6)}`
+      }
     }
     return value
   }
@@ -126,18 +129,6 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
             />
           </div>
 
-          {/* Email */}
-          <div className="form-group-modern">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              placeholder="exemplo@email.com"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-            />
-          </div>
-
           {/* Telefone */}
           <div className="form-group-modern">
             <label htmlFor="phone">Telefone</label>
@@ -147,7 +138,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onSave, onClose })
               placeholder="(00) 00000-0000"
               value={formData.phone}
               onChange={handlePhoneChange}
-              maxLength={15}
+              maxLength={14}
             />
           </div>
 
