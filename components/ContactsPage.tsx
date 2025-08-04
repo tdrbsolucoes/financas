@@ -2,19 +2,15 @@ import React, { useState, useEffect } from 'react'
 import { User } from '@supabase/supabase-js'
 import { contactsService, Contact } from '../src/lib/supabase'
 import { Plus, Edit, Trash2, Building, User as UserIcon, RefreshCw, Filter } from 'lucide-react'
-import { Button } from '../src/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../src/components/ui/card'
-import { Badge } from '../src/components/ui/badge'
-import { Input } from '../src/components/ui/input'
 import ContactModal from './ContactModal'
 import ConfirmationModal from './ConfirmationModal'
-import { cn } from '../src/lib/utils'
 
 interface ContactsPageProps {
   user: User
+  onDatabaseError?: (error: any) => void
 }
 
-const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
+const ContactsPage: React.FC<ContactsPageProps> = ({ user, onDatabaseError }) => {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -38,6 +34,10 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
       
       setContacts(data || [])
     } catch (error: any) {
+      if (onDatabaseError) {
+        onDatabaseError(error)
+        return
+      }
       setError(error.message)
     } finally {
       setLoading(false)
@@ -113,71 +113,63 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div>
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="error-message">
           {error}
         </div>
       )}
 
       {/* Filtros e Busca */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter size={20} />
-            Filtros e Busca
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4">
-            {/* Busca */}
-            <Input
-              placeholder="Buscar por nome ou telefone..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
-            
-            {/* Filtros por Tipo */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant={filter === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter('all')}
-              >
-                Todos
-              </Button>
-              <Button
-                variant={filter === 'empresa' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter('empresa')}
-              >
-                <Building size={16} className="mr-1" />
-                Empresas
-              </Button>
-              <Button
-                variant={filter === 'cliente' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter('cliente')}
-              >
-                <UserIcon size={16} className="mr-1" />
-                Clientes
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="card" style={{ marginBottom: '1.5rem' }}>
+        <h3 style={{ margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Filter size={20} />
+          Filtros e Busca
+        </h3>
+        
+        {/* Busca */}
+        <input
+          type="text"
+          placeholder="Buscar por nome ou telefone..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="form-input"
+          style={{ marginBottom: '1rem', maxWidth: '300px' }}
+        />
+        
+        {/* Filtros por Tipo */}
+        <div className="filter-buttons">
+          <button
+            className={filter === 'all' ? 'active' : ''}
+            onClick={() => setFilter('all')}
+          >
+            Todos
+          </button>
+          <button
+            className={filter === 'empresa' ? 'active' : ''}
+            onClick={() => setFilter('empresa')}
+          >
+            <Building size={16} style={{ marginRight: '0.25rem' }} />
+            Empresas
+          </button>
+          <button
+            className={filter === 'cliente' ? 'active' : ''}
+            onClick={() => setFilter('cliente')}
+          >
+            <UserIcon size={16} style={{ marginRight: '0.25rem' }} />
+            Clientes
+          </button>
+        </div>
+      </div>
 
       {/* Lista de Contatos */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Contatos ({filteredContacts.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="card">
+        <h3 style={{ margin: '0 0 1rem 0' }}>
+          Contatos ({filteredContacts.length})
+        </h3>
+        
         {filteredContacts.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="empty-state">
             <p>
               {searchTerm 
                 ? 'Nenhum contato encontrado com os critérios de busca.'
@@ -188,83 +180,77 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ user }) => {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="data-list">
             {filteredContacts.map((contact) => (
-              <Card key={contact.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        {contact.type === 'empresa' ? 
-                          <Building size={18} className="text-blue-600" /> : 
-                          <UserIcon size={18} className="text-green-600" />
-                        }
-                        <h3 className="font-semibold text-lg">{contact.name}</h3>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant={contact.type === 'empresa' ? 'default' : 'secondary'}>
-                          {contact.type === 'empresa' ? 'Empresa' : 'Cliente'}
-                        </Badge>
-                        {contact.phone && (
-                          <span className="text-sm text-muted-foreground">
-                            {contact.phone}
-                          </span>
-                        )}
-                      </div>
-                      
+              <div key={contact.id} className="data-item">
+                <div className="item-content">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    {contact.type === 'empresa' ? 
+                      <Building size={18} style={{ color: '#2563eb' }} /> : 
+                      <UserIcon size={18} style={{ color: '#16a34a' }} />
+                    }
+                    <h4 style={{ margin: 0 }}>{contact.name}</h4>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      contact.type === 'empresa' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-green-100 text-green-800'
+                    }`}>
+                      {contact.type === 'empresa' ? 'Empresa' : 'Cliente'}
+                    </span>
+                    {contact.phone && (
+                      <span style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
+                        {contact.phone}
+                      </span>
+                    )}
+                  </div>
+                  
                   {contact.recurring_charge?.isActive && (
-                        <Badge variant="outline" className="text-green-600 border-green-200">
-                          <RefreshCw size={12} className="mr-1" />
-                          {formatCurrency(contact.recurring_charge.amount)}
-                        </Badge>
+                    <span className="px-2 py-1 bg-green-100 text-green-800 border border-green-200 rounded-full text-xs font-medium" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <RefreshCw size={12} />
+                      {formatCurrency(contact.recurring_charge.amount)}
+                    </span>
                   )}
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <button
                     onClick={() => {
                       setEditingContact(contact)
                       setShowModal(true)
                     }}
-                        className="h-8 w-8"
+                    className="p-2 rounded-lg border-none bg-blue-100 text-blue-600 cursor-pointer transition-all hover:bg-blue-200"
                   >
-                        <Edit size={16} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                    <Edit size={16} />
+                  </button>
+                  <button
                     onClick={() => {
                       setContactToDelete(contact)
                       setShowDeleteModal(true)
                     }}
-                        className="h-8 w-8 text-red-600 hover:text-red-700"
+                    className="p-2 rounded-lg border-none bg-red-100 text-red-600 cursor-pointer transition-all hover:bg-red-200"
                   >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         )}
-        </CardContent>
-      </Card>
+      </div>
 
       {/* Botão Flutuante */}
-      <Button
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
-        size="icon"
+      <button
+        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white border-none rounded-full shadow-lg cursor-pointer transition-all hover:bg-blue-700 flex items-center justify-center"
         onClick={() => {
           setEditingContact(null)
           setShowModal(true)
         }}
       >
         <Plus size={24} />
-      </Button>
+      </button>
 
       {/* Modais */}
       {showModal && (

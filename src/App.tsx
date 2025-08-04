@@ -116,9 +116,10 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
       </div>
     </div>
   )
+  onDatabaseError?: (error: any) => void
 }
 
-function App() {
+const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState<Page>('dashboard')
@@ -268,10 +269,6 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
   const renderCurrentPage = () => {
     // Interceptar erros de tabelas não encontradas
     const handleDatabaseError = (error: any) => {
-      if (error?.message?.includes('relation') && error?.message?.includes('does not exist')) {
-        setShowDatabaseError(true)
-        return
-      }
       throw error
     }
 
