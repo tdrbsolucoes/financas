@@ -7,6 +7,7 @@ import Sidebar from './components/Sidebar'
 import BottomNav from './components/BottomNav'
 import ContactsPage from './components/ContactsPage'
 import NewContactsPage from './components/NewContactsPage'
+import NewContactsPage from './components/NewContactsPage'
 import FinancialPage from './components/FinancialPage'
 import ReportsPage from './components/ReportsPage'
 
@@ -300,6 +301,8 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
         return <ContactsPage user={user} onDatabaseError={handleDatabaseError} />
       case 'newcontacts':
         return <NewContactsPage user={user} onDatabaseError={handleDatabaseError} />
+      case 'newcontacts':
+        return <NewContactsPage user={user} onDatabaseError={handleDatabaseError} />
       case 'financial':
         return <FinancialPage user={user} onDatabaseError={handleDatabaseError} />
       case 'reports':
@@ -322,6 +325,7 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
           <h2>
             {currentPage === 'dashboard' && 'Dashboard'}
             {currentPage === 'contacts' && 'Contatos1'}
+            {currentPage === 'newcontacts' && 'Contatos'}
             {currentPage === 'newcontacts' && 'Contatos'}
             {currentPage === 'financial' && 'Financeiro'}
             {currentPage === 'reports' && 'Relatórios'}

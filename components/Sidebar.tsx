@@ -18,6 +18,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange, onLogout }
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'contacts', label: 'Contatos1', icon: Users },
     { id: 'newcontacts', label: 'Contatos', icon: Users },
+    { id: 'newcontacts', label: 'Contatos', icon: Users },
     { id: 'financial', label: 'Financeiro', icon: DollarSign },
     { id: 'reports', label: 'Relatórios', icon: FileText },
   ]
