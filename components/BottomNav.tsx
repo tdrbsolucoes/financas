@@ -16,7 +16,6 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentPage, onPageChange }) => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'contacts', label: 'Contatos1', icon: Users },
     { id: 'newcontacts', label: 'Contatos', icon: Users },
-    { id: 'newcontacts', label: 'Contatos', icon: Users },
     { id: 'financial', label: 'Financeiro', icon: DollarSign },
     { id: 'reports', label: 'Relatórios', icon: FileText },
   ]

@@ -9,7 +9,8 @@
     "start": "npm run dev",
     "build": "vite build",
     "setup-db": "node setupDatabase.js",
-    "check-db": "node databaseSetup.js"
+    "check-db": "node databaseSetup.js",
+    "update-db": "node updateDatabase.js"
   },
   "keywords": [],
   "author": "",
