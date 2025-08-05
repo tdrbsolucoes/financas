@@ -6,10 +6,11 @@ import Dashboard from './components/Dashboard'
 import Sidebar from './components/Sidebar'
 import BottomNav from './components/BottomNav'
 import ContactsPage from './components/ContactsPage'
+import NewContactsPage from './components/NewContactsPage'
 import FinancialPage from './components/FinancialPage'
 import ReportsPage from './components/ReportsPage'
 
-type Page = 'dashboard' | 'contacts' | 'financial' | 'reports'
+type Page = 'dashboard' | 'contacts' | 'newcontacts' | 'financial' | 'reports'
 
 // Componente para mostrar erro de banco não configurado
 function DatabaseError() {
@@ -297,6 +298,8 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
         return <Dashboard user={user} onDatabaseError={handleDatabaseError} />
       case 'contacts':
         return <ContactsPage user={user} onDatabaseError={handleDatabaseError} />
+      case 'newcontacts':
+        return <NewContactsPage user={user} onDatabaseError={handleDatabaseError} />
       case 'financial':
         return <FinancialPage user={user} onDatabaseError={handleDatabaseError} />
       case 'reports':
@@ -318,7 +321,8 @@ CREATE POLICY "transactions_policy" ON transactions FOR ALL USING (auth.uid() = 
         <div className="header">
           <h2>
             {currentPage === 'dashboard' && 'Dashboard'}
-            {currentPage === 'contacts' && 'Contatos'}
+            {currentPage === 'contacts' && 'Contatos1'}
+            {currentPage === 'newcontacts' && 'Contatos'}
             {currentPage === 'financial' && 'Financeiro'}
             {currentPage === 'reports' && 'Relatórios'}
           </h2>
