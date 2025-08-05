@@ -1,0 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #111827; /* Tailwind bg-gray-900 */
+}
+
+/* Modal Animations */
+.modal-enter {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal-content-enter {
+  animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from { transform: translateY(20px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Leaflet Dark Theme Adjustments */
+.leaflet-tile-pane {
+    filter: brightness(0.8) contrast(1.2) saturate(0.8);
+}
+
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+    background-color: #1F2937; /* bg-gray-800 */
+    color: #D1D5DB; /* text-gray-300 */
+    box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+}
+
+.leaflet-control-zoom-in, .leaflet-control-zoom-out {
+    background-color: #1f2937 !important;
+    color: #d1d5db !important;
+    border-color: #374151 !important;
+}
+.leaflet-control-zoom-in:hover, .leaflet-control-zoom-out:hover {
+    background-color: #374151 !important;
+}
+
+.leaflet-container a {
+    color: #3b82f6 !important; /* text-blue-500 */
+}
